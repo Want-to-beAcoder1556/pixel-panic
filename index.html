@@ -212,38 +212,6 @@
         /* Finish line visually on top row */
         .finish-line-row .cell-road { background-image: repeating-linear-gradient(45deg, #fff 0, #fff 5px, #000 5px, #000 10px); }
 
-        /* Debug Overlay */
-        #debug-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 50;
-            background: rgba(0, 0, 0, 0.75);
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            padding: 12px 16px;
-            border: 2px solid #00ff00;
-            border-radius: 4px;
-            pointer-events: none;
-            display: none;
-            min-width: 260px;
-            line-height: 1.6;
-        }
-        #debug-overlay .debug-title {
-            color: #ffcc00;
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 6px;
-            border-bottom: 1px solid #00ff00;
-            padding-bottom: 4px;
-        }
-        #debug-overlay .debug-section {
-            color: #00ccff;
-            font-weight: bold;
-            margin-top: 6px;
-        }
-
         /* Arcade UI */
         #arcade-ui {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -262,37 +230,28 @@
 </head>
 <body>
 
-    <!-- Debug Overlay -->
-    <div id="debug-overlay">
-        <div class="debug-title">DEBUG (F3)</div>
-        <div id="debug-fps">FPS: --</div>
-        <div class="debug-section">Player</div>
-        <div id="debug-speed">Speed: 0</div>
-        <div id="debug-position">Pos: 0, 0, 0</div>
-        <div id="debug-angle">Angle: 0</div>
-        <div class="debug-section">Collision</div>
-        <div id="debug-collisions">Boxes: OFF</div>
-    </div>
-
     <!-- HUD -->
     <div id="ui" style="display: none;">
         <div>
             <div id="speedometer">0 MPH</div>
             <div id="health-bar" style="font-size: 24px; color: #ff4444; font-weight: bold; margin-top: 5px; text-shadow: 2px 2px 0px #000;">Health: 100</div>
-            <div id="nitro-hud" style="font-size: 20px; color: #00ffff; font-weight: bold; margin-top: 5px; text-shadow: 2px 2px 0px #000;">Nitro: 0 [SHIFT]</div>
+            <div id="nitro-hud" style="font-size: 20px; color: #00ffff; font-weight: bold; margin-top: 5px; text-shadow: 2px 2px 0px #000;">Nitro: 0 [SPACE]</div>
             <div id="instructions">
                 Controls:<br>
                 <span class="key">A</span> - Steer Left<br>
                 <span class="key">D</span> - Steer Right<br>
                 <span class="key">W</span> - Accelerate<br>
                 <span class="key">S</span> - Brake / Reverse<br>
-                <span class="key">SHIFT</span> - Nitro Boost
+                <span class="key">SPACE</span> - Nitro Boost
             </div>
         </div>
         <div>
             <button class="btn" onclick="exitToMenu()">Exit to Menu</button>
         </div>
     </div>
+
+    <!-- Zone Alert Banner -->
+    <div id="zone-alert" style="position: absolute; top: 15%; left: 50%; transform: translateX(-50%); font-size: 32px; color: #3a873a; font-weight: bold; text-shadow: 2px 2px 0 #000; display: none; z-index: 15; text-align: center; pointer-events: none;">ENTERING DENSE FOREST!</div>
 
     <!-- Main Menu -->
     <div id="overlay">
@@ -318,43 +277,91 @@
     <div id="upgrades-ui">
         <h1>GARAGE UPGRADES</h1>
         <h2 id="coins-display">Coins: 0</h2>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            <div class="upgrade-item">
-                <span>Traction (Turns Faster)</span>
-                <span id="traction-lvl">Lvl 0/5</span>
-                <button class="btn" id="btn-upg-traction" onclick="buyTraction()">Buy (100c)</button>
+        <div style="display: flex; flex-direction: column; gap: 20px; max-height: 65vh; overflow-y: auto; padding-right: 15px; width: 100%; align-items: center;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <h3 style="color: #ff00ff; text-align: center; margin: 0; text-shadow: 2px 2px 0 #000;">PERFORMANCE PARTS</h3>
+                <div class="upgrade-item">
+                    <span>Traction (Turns Faster)</span>
+                    <span id="traction-lvl">Lvl 0/5</span>
+                    <button class="btn" id="btn-upg-traction" onclick="buyTraction()">Buy (100c)</button>
+                </div>
+                <div class="upgrade-item">
+                    <span>Armor (+20 Health)</span>
+                    <span id="armor-lvl">Lvl 0/5</span>
+                    <button class="btn" id="btn-upg-armor" onclick="buyArmor()">Buy (100c)</button>
+                </div>
+                <div class="upgrade-item">
+                    <span>Nitro Boost (4s Invincible)</span>
+                    <span id="nitro-qty">Owned: 0</span>
+                    <button class="btn" id="btn-buy-nitro" onclick="buyNitro()">Buy (50c)</button>
+                </div>
+                <div class="upgrade-item">
+                    <span>Custom Paint Job</span>
+                    <input type="color" id="car-color-picker" value="#d92b2b" style="width: 50px; height: 40px; cursor: pointer; border: 2px solid #fff; border-radius: 4px; background: #000; padding: 0;">
+                    <button class="btn" id="btn-buy-paint" onclick="buyPaintColor()">Paint (200c)</button>
+                </div>
             </div>
-            <div class="upgrade-item">
-                <span>Armor (+20 Health)</span>
-                <span id="armor-lvl">Lvl 0/5</span>
-                <button class="btn" id="btn-upg-armor" onclick="buyArmor()">Buy (100c)</button>
+
+            <div id="jeep-upgrades" style="display: none; flex-direction: column; gap: 10px; width: 100%; align-items: center; border-top: 2px dashed #556b2f; border-bottom: 2px dashed #556b2f; padding: 10px 0;">
+                <h3 style="color: #556b2f; text-align: center; margin: 0; text-shadow: 2px 2px 0 #000;">JEEP EXCLUSIVE</h3>
+                <div class="upgrade-item" style="border-color: #556b2f; width: 600px;">
+                    <span style="color: #556b2f;">Tough Tires (Drive on Grass)</span>
+                    <span id="jeep-tires-status">Not Owned</span>
+                    <button class="btn" id="btn-buy-tires" style="background:#556b2f;" onclick="buyToughTires()">Buy (300c)</button>
+                </div>
             </div>
-            <div class="upgrade-item">
-                <span>Nitro Boost (4s Invincible)</span>
-                <span id="nitro-qty">Owned: 0</span>
-                <button class="btn" id="btn-buy-nitro" onclick="buyNitro()">Buy (50c)</button>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center;" id="dealership-list">
+                <h3 style="color: #00ffff; text-align: center; margin: 10px 0 0 0; text-shadow: 2px 2px 0 #000;">VEHICLES</h3>
+                <!-- Cars dynamically injected here -->
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center;" id="map-list">
+                <h3 style="color: #00ffff; text-align: center; margin: 10px 0 0 0; text-shadow: 2px 2px 0 #000;">ENVIRONMENTS</h3>
+                <!-- Maps dynamically injected here -->
             </div>
         </div>
-        <button class="btn" onclick="closeUpgrades()" style="margin-top: 30px; background: #666;">Back to Menu</button>
+        <button class="btn" onclick="closeUpgrades()" style="margin-top: 20px; background: #666;">Back to Menu</button>
     </div>
 
     <!-- Map Builder -->
     <div id="builder-ui">
         <div id="builder-toolbar">
             <h2>MAP BUILDER</h2>
-            <button class="tool-btn active" data-tool="road"><div class="tool-icon icon-road"></div> Asphalt <span style="color:#ffcc00;">[1]</span></button>
-            <button class="tool-btn" data-tool="grass"><div class="tool-icon icon-grass"></div> Grass (Eraser) <span style="color:#ffcc00;">[2]</span></button>
-            <button class="tool-btn" data-tool="tree"><div class="tool-icon icon-tree"></div> Tree <span style="color:#ffcc00;">[3]</span></button>
-            <button class="tool-btn" data-tool="rock"><div class="tool-icon icon-rock"></div> Rock <span style="color:#ffcc00;">[4]</span></button>
-            <button class="tool-btn" data-tool="trash"><div class="tool-icon icon-trash"></div> Trash Bag <span style="color:#ffcc00;">[5]</span></button>
-            <button class="tool-btn" data-tool="pinktrash"><div class="tool-icon icon-pinktrash"></div> Pink Trash <span style="color:#ffcc00;">[6]</span></button>
-            <button class="tool-btn" data-tool="car"><div class="tool-icon icon-car"></div> Enemy Car <span style="color:#ffcc00;">[7]</span></button>
-            <button class="tool-btn" data-tool="rager"><div class="tool-icon icon-rager"></div> Road Rager <span style="color:#ffcc00;">[8]</span></button>
-            <button class="tool-btn" data-tool="crash"><div class="tool-icon icon-crash"></div> Car Crash <span style="color:#ffcc00;">[9]</span></button>
-            <button class="tool-btn" data-tool="ramp"><div class="tool-icon icon-ramp"></div> Car Ramp <span style="color:#ffcc00;">[0]</span></button>
-            <button class="tool-btn" data-tool="gas"><div class="tool-icon icon-gas"></div> Gas Can <span style="color:#ffcc00;">[Q]</span></button>
-            <button class="tool-btn" data-tool="pothole"><div class="tool-icon icon-pothole"></div> Pothole <span style="color:#ffcc00;">[E]</span></button>
-            <button class="tool-btn" data-tool="autoshop"><div class="tool-icon icon-autoshop"></div> Auto Shop <span style="color:#ffcc00;">[R]</span></button>
+            <button class="tool-btn active" data-tool="road"><div class="tool-icon icon-road"></div> Asphalt</button>
+            <button class="tool-btn" data-tool="grass"><div class="tool-icon icon-grass"></div> Grass (Eraser)</button>
+            <button class="tool-btn" data-tool="tree"><div class="tool-icon icon-tree"></div> Tree</button>
+            <button class="tool-btn" data-tool="rock"><div class="tool-icon icon-rock"></div> Rock</button>
+            <button class="tool-btn" data-tool="trash"><div class="tool-icon icon-trash"></div> Trash Bag</button>
+            <button class="tool-btn" data-tool="pinktrash"><div class="tool-icon icon-pinktrash"></div> Pink Trash</button>
+            <button class="tool-btn" data-tool="car"><div class="tool-icon icon-car"></div> Enemy Car</button>
+            <button class="tool-btn" data-tool="rager"><div class="tool-icon icon-rager"></div> Road Rager</button>
+            <button class="tool-btn" data-tool="crash"><div class="tool-icon icon-crash"></div> Car Crash</button>
+            <button class="tool-btn" data-tool="ramp"><div class="tool-icon icon-ramp"></div> Car Ramp</button>
+            <button class="tool-btn" data-tool="gas"><div class="tool-icon icon-gas"></div> Gas Can</button>
+            <button class="tool-btn" data-tool="pothole"><div class="tool-icon icon-pothole"></div> Pothole</button>
+            <button class="tool-btn" data-tool="autoshop"><div class="tool-icon icon-autoshop"></div> Auto Shop</button>
+            
+            <!-- NEW BRUSH CONTROLS -->
+            <div style="margin-top: 10px;">
+                <span style="color:#aaa; font-size: 14px;">Brush Size:</span>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button class="tool-btn brush-btn active" onclick="setBrushSize(1, this)" style="flex:1; justify-content: center; padding: 5px;">1x</button>
+                    <button class="tool-btn brush-btn" onclick="setBrushSize(3, this)" style="flex:1; justify-content: center; padding: 5px;">3x</button>
+                    <button class="tool-btn brush-btn" onclick="setBrushSize(5, this)" style="flex:1; justify-content: center; padding: 5px;">5x</button>
+                </div>
+            </div>
+
+            <!-- NEW ACTION CONTROLS -->
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button class="tool-btn" onclick="fillMap()" style="flex:1; justify-content: center; padding: 5px; background: #663333;">Fill</button>
+                <button class="tool-btn" onclick="clearMap()" style="flex:1; justify-content: center; padding: 5px; background: #663333;">Reset</button>
+            </div>
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button id="btn-save-map" class="tool-btn" onclick="saveMap()" style="flex:1; justify-content: center; padding: 5px; background: #336633;">Save</button>
+                <button id="btn-load-map" class="tool-btn" onclick="loadMap()" style="flex:1; justify-content: center; padding: 5px; background: #336633;">Load</button>
+            </div>
+
             <div style="flex-grow: 1;"></div>
             <hr style="border-color: #444; margin: 20px 0;">
             <p style="font-size: 12px; color: #aaa; margin-top:0;">Paint your track. Grass will crash your car! Reach the top row to win.</p>
@@ -380,6 +387,7 @@
         // --- Game Constants & Variables ---
         const RESOLUTION_SCALE = 1; 
         const ROAD_WIDTH = 30;
+        let currentRoadWidth = ROAD_WIDTH;
         const CHUNK_SIZE = 400; 
         
         let gameMode = 'menu'; 
@@ -389,13 +397,32 @@
         let tractionLevel = 0;
         let armorLevel = 0;
         let nitroCount = 0;
-        const MAX_UPGRADE_LEVEL = 10;
+        const MAX_UPGRADE_LEVEL = 5;
         let distanceTraveled = 0;
 
         // Custom Map Grid Constants
         const GRID_ROWS = 150; 
         const GRID_COLS = 35;  
         const CELL_SIZE = 10;  
+
+        // --- Maps & Environments ---
+        const MAP_ENVIRONMENTS = [
+            { id: 'default', name: 'Green Plains', cost: 0, unlocked: true, skyColor: 0x87CEEB, groundBase: '#3a873a', groundDetail1: '#429e42', groundDetail2: '#2d6a2d' },
+            { id: 'desert', name: 'Desert Canyon', cost: 8000, unlocked: false, skyColor: 0xffcc66, groundBase: '#d2b48c', groundDetail1: '#e6cc98', groundDetail2: '#c0a07a' },
+            { id: 'snow', name: 'Snowy Tundra', cost: 16000, unlocked: false, skyColor: 0xddeeff, groundBase: '#eeeeee', groundDetail1: '#ffffff', groundDetail2: '#dddddd' },
+            { id: 'volcano', name: 'Volcanic Ash', cost: 32000, unlocked: false, skyColor: 0x442222, groundBase: '#333333', groundDetail1: '#444444', groundDetail2: '#221111' },
+            { id: 'cyber', name: 'Cyber Grid', cost: 64000, unlocked: false, skyColor: 0x050510, groundBase: '#111122', groundDetail1: '#00ffff', groundDetail2: '#ff00ff' }
+        ];
+        let currentMapIndex = 0;
+
+        // --- Cars & Vehicles ---
+        const CAR_TYPES = [
+            { id: 'default', name: 'Classic Red', cost: 0, speedMult: 1.0, accelMult: 1.0, tractionMult: 1.0, armorMult: 1.0, color: 0xd92b2b, owned: true },
+            { id: 'jeep', name: 'Off-Road Jeep', cost: 500, speedMult: 0.9, accelMult: 0.9, tractionMult: 1.5, armorMult: 1.4, color: 0x556b2f, owned: false },
+            { id: 'truck', name: 'Heavy Truck', cost: 1000, speedMult: 0.85, accelMult: 0.7, tractionMult: 0.8, armorMult: 2.0, color: 0x1e90ff, owned: false },
+            { id: 'lambo', name: 'Hyper Lambo', cost: 2000, speedMult: 1.4, accelMult: 1.5, tractionMult: 1.2, armorMult: 0.6, color: 0x39ff14, owned: false }
+        ];
+        let currentCarIndex = 0;
 
         // Physics variables
         let speed = 0;
@@ -405,21 +432,26 @@
         let maxSpeed = 0.45; 
         const BASE_MAX_SPEED = 0.45; 
         const OFFROAD_MAX_SPEED = 0.15;
-        const ACCELERATION = 0.006; 
+        let ACCELERATION = 0.006; 
         const BRAKING = 0.01;
         const FRICTION = 0.002;
-        const TURN_SPEED = 0.03;
+        let TURN_SPEED = 0.018; // Lowered base sensitivity (was 0.03)
 
         let verticalVelocity = 0;
         const GRAVITY = 0.0065;
 
-        const keys = { a: false, d: false, up: false, down: false, shift: false };
+        const keys = { a: false, d: false, up: false, down: false, space: false };
         let health = 100;
         let maxHealth = 100; // Stores the starting health cap
         let invertEndTime = 0;
         let boostEndTime = 0;
         let slowEndTime = 0; 
         let ragerImmunity = false;
+
+        // Upgrades / Game State Extensions
+        let toughTiresOwned = false;
+        let currentZone = 'normal';
+        let zoneNextChangeZ = -1000;
 
         // Secret Cheat Code Variable
         let cheatCodeInput = "";
@@ -477,7 +509,7 @@
                 engineOsc.frequency.setTargetAtTime(pitch, audioCtx.currentTime, 0.1);
             }
             
-            if (isGameRunning || gameMode === 'builder' || isArcadeRunning) {
+            if (isGameRunning || gameMode === 'builder') {
                 if (audioCtx.currentTime > nextNoteTime - 0.05) {
                     const isInverted = isGameRunning && Date.now() < invertEndTime;
                     const isBoosted = isGameRunning && Date.now() < boostEndTime;
@@ -584,8 +616,8 @@
         renderer.shadowMap.type = THREE.BasicShadowMap;
         
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 100, 300);
+        scene.background = new THREE.Color(0x87CEEB); 
+        scene.fog = new THREE.Fog(0x87CEEB, 100, 300); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
         
@@ -613,21 +645,38 @@
             ctx.fillStyle = '#444444'; ctx.fillRect(0, 0, w, h);
             ctx.fillStyle = '#ffffff'; ctx.fillRect(2, 0, 2, h);
             ctx.fillStyle = '#ffffff'; ctx.fillRect(w - 4, 0, 2, h);
-            ctx.fillStyle = '#ffffff'; ctx.fillRect((w / 2) - 2, 0, 4, h / 2);
+            ctx.fillStyle = '#ffcc00'; ctx.fillRect((w / 2) - 2, 0, 4, h / 2); // Yellow center lines
         });
 
         const plainRoadTexture = createPixelTexture(32, 32, (ctx, w, h) => {
             ctx.fillStyle = '#444444'; ctx.fillRect(0, 0, w, h);
-            ctx.fillStyle = '#ffffff'; ctx.fillRect((w / 2) - 2, 0, 4, h / 2); 
+            ctx.fillStyle = '#ffcc00'; ctx.fillRect((w / 2) - 2, 0, 4, h / 2); 
         });
 
-        const grassTexture = createPixelTexture(32, 32, (ctx, w, h) => {
-            ctx.fillStyle = '#3a873a'; ctx.fillRect(0, 0, w, h);
-            for(let i=0; i<30; i++) {
-                ctx.fillStyle = Math.random() > 0.5 ? '#429e42' : '#2d6a2d';
-                ctx.fillRect(Math.floor(Math.random()*w), Math.floor(Math.random()*h), 1, 1);
+        let endlessGround = null, endlessRoad = null; // Fix for TDZ error
+        let grassTexture;
+        function updateGrassTexture(env) {
+            grassTexture = createPixelTexture(32, 32, (ctx, w, h) => {
+                ctx.fillStyle = env.groundBase; ctx.fillRect(0, 0, w, h);
+                for(let i=0; i<30; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? env.groundDetail1 : env.groundDetail2;
+                    ctx.fillRect(Math.floor(Math.random()*w), Math.floor(Math.random()*h), 1, 1);
+                }
+            });
+            
+            document.body.style.backgroundColor = '#' + env.skyColor.toString(16).padStart(6, '0');
+            scene.background = new THREE.Color(env.skyColor);
+            scene.fog = new THREE.Fog(env.skyColor, 100, 300);
+
+            if (endlessGround && endlessGround.material) {
+                grassTexture.repeat.set(12, 100);
+                endlessGround.material.map = grassTexture;
+                endlessGround.material.needsUpdate = true;
             }
-        });
+        }
+        
+        // Initialize default map
+        updateGrassTexture(MAP_ENVIRONMENTS[0]);
 
         // --- Shared World Items ---
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -648,45 +697,122 @@
         const car = new THREE.Group();
         const carBodyGroup = new THREE.Group(); 
         car.add(carBodyGroup);
-
-        carChassisMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 4.4), new THREE.MeshLambertMaterial({ color: 0xd92b2b }));
-        carChassisMesh.position.y = 0.6; carChassisMesh.castShadow = true; carBodyGroup.add(carChassisMesh);
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-        cabin.position.set(0, 1.2, -0.2); cabin.castShadow = true; carBodyGroup.add(cabin);
-        const roof = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 2.2), new THREE.MeshLambertMaterial({ color: 0xeeeeee }));
-        roof.position.set(0, 1.55, -0.2); roof.castShadow = true; carBodyGroup.add(roof);
-
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
-        const lightL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), lightMat);
-        lightL.position.set(-0.7, 0.6, -2.25); carBodyGroup.add(lightL);
-        const lightR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), lightMat);
-        lightR.position.set(0.7, 0.6, -2.25); carBodyGroup.add(lightR);
+        scene.add(car);
 
         const wheelGeo = new THREE.BoxGeometry(0.6, 0.8, 0.8);
         const wheelMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
-        [[-1.1, 0.4, -1.3], [1.1, 0.4, -1.3], [-1.1, 0.4, 1.3], [1.1, 0.4, 1.3]].forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.position.set(...pos); wheel.castShadow = true; carBodyGroup.add(wheel);
-        });
 
-        scene.add(car);
-        carBodyGroup.add(camera);
-        camera.position.set(0, 1.3, -0.5);
+        function buildPlayerCar(index) {
+            carBodyGroup.remove(camera);
+            while(carBodyGroup.children.length > 0) {
+                carBodyGroup.remove(carBodyGroup.children[0]);
+            }
+
+            const cData = CAR_TYPES[index];
+            
+            let chassisW = 2.2, chassisH = 0.6, chassisL = 4.4, chassisY = 0.6;
+            let cabinW = 1.6, cabinH = 0.6, cabinL = 2.2, cabinY = 1.2, cabinZ = -0.2;
+            let wheelS = 1.0;
+
+            if (cData.id === 'jeep') {
+                chassisW = 2.8; chassisH = 0.6; chassisL = 4.4; chassisY = 0.8; 
+                cabinW = 2.0; cabinH = 0.8; cabinL = 1.8; cabinY = 1.5; cabinZ = -0.2; 
+                wheelS = 1.2;
+            } else if (cData.id === 'truck') {
+                chassisW = 2.4; chassisH = 0.8; chassisL = 5.2; chassisY = 0.7;
+                cabinW = 2.0; cabinH = 1.0; cabinL = 1.6; cabinY = 1.6; cabinZ = -1.2;
+                wheelS = 1.1;
+            } else if (cData.id === 'lambo') {
+                chassisW = 2.6; chassisH = 0.4; chassisL = 4.6; chassisY = 0.4;
+                cabinW = 1.8; cabinH = 0.4; cabinL = 2.0; cabinY = 0.8; cabinZ = 0;
+                wheelS = 0.8;
+            }
+
+            carChassisMesh = new THREE.Mesh(new THREE.BoxGeometry(chassisW, chassisH, chassisL), new THREE.MeshLambertMaterial({ color: cData.color }));
+            carChassisMesh.position.y = chassisY; carChassisMesh.castShadow = true; carBodyGroup.add(carChassisMesh);
+            
+            // Cabin
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(cabinW, cabinH, cabinL), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            cabin.position.set(0, cabinY, cabinZ); cabin.castShadow = true; carBodyGroup.add(cabin);
+
+            // Roof (No roof for Jeep - roll cage instead)
+            if (cData.id === 'jeep') {
+                const rollGeo = new THREE.BoxGeometry(cabinW, cabinH, cabinL);
+                const rollEdges = new THREE.EdgesGeometry(rollGeo);
+                const rollCage = new THREE.LineSegments(rollEdges, new THREE.LineBasicMaterial({ color: 0x222222, linewidth: 2 }));
+                rollCage.position.set(0, cabinY, cabinZ);
+                carBodyGroup.add(rollCage);
+            } else {
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(cabinW, 0.1, cabinL), new THREE.MeshLambertMaterial({ color: 0xeeeeee }));
+                roof.position.set(0, cabinY + cabinH/2 + 0.05, cabinZ); roof.castShadow = true; carBodyGroup.add(roof);
+            }
+
+            // Headlights
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+            const lightL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), lightMat);
+            lightL.position.set(-chassisW/2 + 0.4, chassisY, -chassisL/2 - 0.05); carBodyGroup.add(lightL);
+            const lightR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), lightMat);
+            lightR.position.set(chassisW/2 - 0.4, chassisY, -chassisL/2 - 0.05); carBodyGroup.add(lightR);
+
+            // Wheels
+            const wGeo = new THREE.BoxGeometry(0.6 * wheelS, 0.8 * wheelS, 0.8 * wheelS);
+            [[-chassisW/2, chassisY - 0.2, -chassisL/2 + 0.9], [chassisW/2, chassisY - 0.2, -chassisL/2 + 0.9], 
+             [-chassisW/2, chassisY - 0.2, chassisL/2 - 0.9], [chassisW/2, chassisY - 0.2, chassisL/2 - 0.9]].forEach(pos => {
+                const wheel = new THREE.Mesh(wGeo, wheelMat);
+                wheel.position.set(...pos); wheel.castShadow = true; carBodyGroup.add(wheel);
+            });
+
+            // Put camera back
+            carBodyGroup.add(camera);
+            
+            // Adjust camera height and angle based on vehicle
+            let camYOffset = 1.3;
+            let camZOffset = -0.5;
+            let camTilt = 0;
+            
+            if (cData.id === 'jeep') {
+                camYOffset = 1.6; 
+                camZOffset = -0.8; // Moved forward inside the cabin for 1st person
+                camTilt = -0.05; // Tilted down slightly to show off the wide hood
+            } else if (cData.id === 'truck') {
+                camYOffset = 3.0;
+                camZOffset = -0.5;
+                camTilt = -0.15; // Highest view, tilted down further
+            } else if (cData.id === 'lambo') {
+                camYOffset = 0.9;
+                camZOffset = -0.5;
+                camTilt = 0.05; // Lowest view, tilted up slightly
+            }
+            
+            camera.position.set(0, camYOffset, camZOffset);
+            camera.rotation.x = camTilt;
+        }
+
+        // Initialize default car
+        buildPlayerCar(0);
 
         // --- Prefab Creators ---
         function createTree() {
             const tree = new THREE.Group();
             const trunk = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2, 0.8), new THREE.MeshLambertMaterial({ color: 0x5c4033 }));
-            trunk.position.y = 1; trunk.castShadow = true; tree.add(trunk);
+            trunk.position.y = 1; 
+            trunk.castShadow = false; // OPTIMIZATION: Disabled to prevent massive lag
+            tree.add(trunk);
             const leaves = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), new THREE.MeshLambertMaterial({ color: 0x2e8b57 }));
-            leaves.position.y = 3.5; leaves.castShadow = true; tree.add(leaves);
+            leaves.position.y = 3.5; 
+            leaves.castShadow = false; // OPTIMIZATION: Disabled to prevent massive lag
+            tree.add(leaves);
+            tree.userData = { type: 'tree' };
             return tree;
         }
 
         function createRock() {
             const size = 1 + Math.random() * 2;
             const rock = new THREE.Mesh(new THREE.BoxGeometry(size, size*0.8, size), new THREE.MeshLambertMaterial({ color: 0x888888 }));
-            rock.position.y = (size * 0.8) / 2; rock.castShadow = true; rock.rotation.y = Math.random() * Math.PI;
+            rock.position.y = (size * 0.8) / 2; 
+            rock.castShadow = false; // OPTIMIZATION: Disabled to prevent massive lag
+            rock.rotation.y = Math.random() * Math.PI;
+            rock.userData = { type: 'rock' };
             return rock;
         }
 
@@ -867,7 +993,6 @@
         }
 
         // --- Endless Mode Initialization ---
-        let endlessGround, endlessRoad;
         let endlessProps = [];
         let endlessObstacles = [];
         let endlessDifficulty = 'normal';
@@ -876,8 +1001,9 @@
             endlessDifficulty = difficulty;
 
             if (!endlessGround) {
-                const groundGeo = new THREE.PlaneGeometry(1000, 1000);
-                grassTexture.repeat.set(100, 100);
+                // Shrink the infinite 1000x1000 grass plane down to exactly fit the invisible walls (width of 120)
+                const groundGeo = new THREE.PlaneGeometry(120, 1000);
+                grassTexture.repeat.set(12, 100);
                 endlessGround = new THREE.Mesh(groundGeo, new THREE.MeshLambertMaterial({ map: grassTexture }));
                 endlessGround.rotation.x = -Math.PI / 2; endlessGround.receiveShadow = true;
                 endlessGroup.add(endlessGround);
@@ -887,6 +1013,9 @@
                 endlessRoad = new THREE.Mesh(roadGeo, new THREE.MeshLambertMaterial({ map: roadTexture }));
                 endlessRoad.rotation.x = -Math.PI / 2; endlessRoad.position.y = 0.05; endlessRoad.receiveShadow = true;
                 endlessGroup.add(endlessRoad);
+            } else {
+                endlessGround.material.map = grassTexture;
+                endlessGround.material.needsUpdate = true;
             }
 
             endlessProps.forEach(prop => endlessGroup.remove(prop));
@@ -894,13 +1023,16 @@
             endlessProps = [];
             endlessObstacles = [];
 
-            for (let i = 0; i < 150; i++) {
+            // Spawn significantly more trees and rocks for the thick forest effect
+            for (let i = 0; i < 250; i++) {
                 const prop = Math.random() > 0.4 ? createTree() : createRock();
                 const side = Math.random() > 0.5 ? 1 : -1;
-                prop.position.set(side * ((ROAD_WIDTH / 2 + 5) + Math.random() * 80), 0, -Math.random() * CHUNK_SIZE);
+                // Added a larger buffer (+2.5) so they never touch the road
+                prop.position.set(side * ((ROAD_WIDTH / 2 + 2.5) + Math.random() * 25), 0, -Math.random() * CHUNK_SIZE);
                 endlessGroup.add(prop); endlessProps.push(prop);
             }
 
+            // Restore original massive wave sizes of traffic
             let numObstacles = 35; 
             if (difficulty === 'easy') numObstacles = 15; 
             if (difficulty === 'hard') numObstacles = 60; 
@@ -939,6 +1071,32 @@
 
                 endlessGroup.add(obs); endlessObstacles.push(obs);
             }
+
+            // Pre-spawn Rolling Rocks strictly for the Valley Zone
+            for (let i = 0; i < 20; i++) {
+                const obs = createRock();
+                obs.userData.type = 'rolling_rock';
+                obs.userData.speedX = 0;
+                obs.userData.rotZDir = 0;
+                obs.userData.hit = false;
+                obs.position.set(0, -10, 5000); // Hide initially below map far away
+                obs.visible = false;
+                endlessGroup.add(obs); 
+                endlessObstacles.push(obs);
+            }
+
+            // Clear scenery away from autoshops initially
+            endlessProps.forEach(prop => {
+                endlessObstacles.forEach(obs => {
+                    if (obs.userData.type === 'autoshop') {
+                        // Check if prop is near the shop on the Z axis and on the same side of the road
+                        if (Math.abs(prop.position.z - obs.position.z) < 50 && Math.sign(prop.position.x) === Math.sign(obs.position.x)) {
+                            // Push the tree/rock out further horizontally
+                            prop.position.x = Math.sign(prop.position.x) * ((ROAD_WIDTH / 2) + 25 + Math.random() * 15);
+                        }
+                    }
+                });
+            });
         }
 
 
@@ -976,9 +1134,68 @@
         }
         renderBuilderGrid();
 
-        document.querySelectorAll('.tool-btn').forEach(btn => {
+        // Map Builder Action Functions
+        let brushSize = 1;
+
+        function setBrushSize(size, btnElement) {
+            brushSize = size;
+            document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        function clearMap() {
+            for(let r=0; r<GRID_ROWS; r++) {
+                for(let c=0; c<GRID_COLS; c++) {
+                    mapData[r][c] = 'grass';
+                }
+            }
+            const centerCol = Math.floor(GRID_COLS / 2);
+            for(let r=0; r<GRID_ROWS; r++) {
+                mapData[r][centerCol - 1] = 'road';
+                mapData[r][centerCol] = 'road';
+                mapData[r][centerCol + 1] = 'road';
+            }
+            renderBuilderGrid();
+            if (audioCtx) playHealSound();
+        }
+
+        function fillMap() {
+            for(let r=0; r<GRID_ROWS; r++) {
+                for(let c=0; c<GRID_COLS; c++) {
+                    mapData[r][c] = currentTool;
+                }
+            }
+            renderBuilderGrid();
+            if (audioCtx) playPowerupSound();
+        }
+
+        function saveMap() {
+            localStorage.setItem('pixelPanicCustomMap', JSON.stringify(mapData));
+            if (audioCtx) playBoostSound();
+            const btn = document.getElementById('btn-save-map');
+            btn.innerText = "SAVED!";
+            setTimeout(() => btn.innerText = "Save", 2000);
+        }
+
+        function loadMap() {
+            const saved = localStorage.getItem('pixelPanicCustomMap');
+            if(saved) {
+                mapData = JSON.parse(saved);
+                renderBuilderGrid();
+                if (audioCtx) playHealSound();
+            } else {
+                if (audioCtx) playCrashSound();
+                const btn = document.getElementById('btn-load-map');
+                btn.innerText = "NONE!";
+                setTimeout(() => btn.innerText = "Load", 2000);
+            }
+        }
+
+        document.querySelectorAll('.tool-btn:not(.brush-btn):not(#btn-save-map):not(#btn-load-map):not([onclick="fillMap()"]):not([onclick="clearMap()"])').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tool-btn').forEach(b => {
+                    if(b.dataset.tool) b.classList.remove('active');
+                });
                 btn.classList.add('active');
                 currentTool = btn.dataset.tool;
             });
@@ -991,12 +1208,30 @@
 
         function paintCell(target) {
             if (!target.classList.contains('grid-cell')) return;
-            const r = parseInt(target.dataset.row);
-            const c = parseInt(target.dataset.col);
+            const centerR = parseInt(target.dataset.row);
+            const centerC = parseInt(target.dataset.col);
             
-            mapData[r][c] = currentTool;
-            target.className = `grid-cell cell-${currentTool}`;
-            if(r === GRID_ROWS - 1) target.classList.add('finish-line-row');
+            const offset = Math.floor(brushSize / 2);
+            
+            // Loop for brush size
+            for(let i = -offset; i <= offset; i++) {
+                for(let j = -offset; j <= offset; j++) {
+                    const drawR = centerR + i;
+                    const drawC = centerC + j;
+                    
+                    if(drawR >= 0 && drawR < GRID_ROWS && drawC >= 0 && drawC < GRID_COLS) {
+                        mapData[drawR][drawC] = currentTool;
+                        
+                        // Update visual DOM node immediately
+                        const index = (GRID_ROWS - 1 - drawR) * GRID_COLS + drawC;
+                        const cell = gridDOM.children[index];
+                        if(cell) {
+                            cell.className = `grid-cell cell-${currentTool}`;
+                            if(drawR === GRID_ROWS - 1) cell.classList.add('finish-line-row');
+                        }
+                    }
+                }
+            }
         }
 
         function buildCustom3DWorld() {
@@ -1005,8 +1240,9 @@
             }
             customObstacles = [];
 
-            const bgGeo = new THREE.PlaneGeometry(GRID_COLS * CELL_SIZE + 200, GRID_ROWS * CELL_SIZE + 200);
-            grassTexture.repeat.set(50, 50);
+            // Snap the custom map grass background strictly to the grid edges (removed the +200 invisible overflow)
+            const bgGeo = new THREE.PlaneGeometry(GRID_COLS * CELL_SIZE, GRID_ROWS * CELL_SIZE);
+            grassTexture.repeat.set(GRID_COLS, GRID_ROWS);
             const bgMesh = new THREE.Mesh(bgGeo, new THREE.MeshLambertMaterial({ map: grassTexture }));
             bgMesh.rotation.x = -Math.PI / 2;
             bgMesh.position.y = -0.01; 
@@ -1033,8 +1269,8 @@
                     }
 
                     let obj = null;
-                    if (type === 'tree') obj = createTree();
-                    else if (type === 'rock') obj = createRock();
+                    if (type === 'tree') { obj = createTree(); customObstacles.push(obj); }
+                    else if (type === 'rock') { obj = createRock(); customObstacles.push(obj); }
                     else if (type === 'trash') { obj = createTrash(); customObstacles.push(obj); }
                     else if (type === 'pinktrash') { obj = createPinkTrash(); customObstacles.push(obj); }
                     else if (type === 'car') { obj = createEnemyCar(); customObstacles.push(obj); }
@@ -1084,6 +1320,116 @@
             document.getElementById('nitro-qty').innerText = `Owned: ${nitroCount}`;
             const btnNitro = document.getElementById('btn-buy-nitro');
             btnNitro.innerText = `Buy (${NITRO_COST}c)`; btnNitro.disabled = totalCoins < NITRO_COST;
+
+            const btnPaint = document.getElementById('btn-buy-paint');
+            if (btnPaint) btnPaint.disabled = totalCoins < 200;
+
+            // Jeep Exclusive Logic
+            const jeepUpg = document.getElementById('jeep-upgrades');
+            if (CAR_TYPES[currentCarIndex].id === 'jeep') {
+                jeepUpg.style.display = 'flex';
+                document.getElementById('jeep-tires-status').innerText = toughTiresOwned ? "Owned" : "Not Owned";
+                const btnTires = document.getElementById('btn-buy-tires');
+                if (toughTiresOwned) {
+                    btnTires.innerText = "EQUIPPED"; btnTires.disabled = true;
+                } else {
+                    btnTires.innerText = "Buy (300c)"; btnTires.disabled = totalCoins < 300;
+                }
+            } else {
+                jeepUpg.style.display = 'none';
+            }
+
+            // Dealership logic
+            const dealerContainer = document.getElementById('dealership-list');
+            let html = '<h3 style="color: #00ffff; text-align: center; margin: 10px 0 0 0; text-shadow: 2px 2px 0 #000;">VEHICLES</h3>';
+            CAR_TYPES.forEach((c, idx) => {
+                let actionBtn = '';
+                if (c.owned) {
+                    if (currentCarIndex === idx) {
+                        actionBtn = `<button class="btn" style="background:#00ff00; color:#000;" disabled>EQUIPPED</button>`;
+                    } else {
+                        actionBtn = `<button class="btn" style="border-color:#00ffff; color:#00ffff;" onclick="equipCar(${idx})">EQUIP</button>`;
+                    }
+                } else {
+                    let canAfford = totalCoins >= c.cost;
+                    actionBtn = `<button class="btn" ${canAfford ? '' : 'disabled'} onclick="buyCar(${idx})">BUY (${c.cost}c)</button>`;
+                }
+                
+                const hexColor = c.color.toString(16).padStart(6, '0');
+                html += `
+                <div class="upgrade-item" style="border-color: #${hexColor}; width: 600px;">
+                    <span style="color: #${hexColor};">${c.name}</span>
+                    <div style="display:flex; flex-direction:column; font-size:14px; font-weight:normal; text-align:left; line-height:1.2;">
+                        <span>Spd: ${Math.round(c.speedMult*100)}% | Acc: ${Math.round(c.accelMult*100)}%</span>
+                        <span>Trn: ${Math.round(c.tractionMult*100)}% | Amr: ${Math.round(c.armorMult*100)}%</span>
+                    </div>
+                    ${actionBtn}
+                </div>`;
+            });
+            dealerContainer.innerHTML = html;
+
+            // Map Environments Logic
+            const mapContainer = document.getElementById('map-list');
+            if (mapContainer) {
+                let mapHtml = '<h3 style="color: #00ffff; text-align: center; margin: 10px 0 0 0; text-shadow: 2px 2px 0 #000;">ENVIRONMENTS</h3>';
+                MAP_ENVIRONMENTS.forEach((m, idx) => {
+                    let actionBtn = '';
+                    if (m.unlocked) {
+                        if (currentMapIndex === idx) {
+                            actionBtn = `<button class="btn" style="background:#00ff00; color:#000;" disabled>EQUIPPED</button>`;
+                        } else {
+                            actionBtn = `<button class="btn" style="border-color:#00ffff; color:#00ffff;" onclick="equipMap(${idx})">EQUIP</button>`;
+                        }
+                    } else {
+                        let canAfford = totalCoins >= m.cost;
+                        actionBtn = `<button class="btn" ${canAfford ? '' : 'disabled'} onclick="buyMap(${idx})">BUY (${m.cost.toLocaleString()}c)</button>`;
+                    }
+                    
+                    mapHtml += `
+                    <div class="upgrade-item" style="border-color: #aaa; width: 600px;">
+                        <span style="color: #fff;">${m.name}</span>
+                        ${actionBtn}
+                    </div>`;
+                });
+                mapContainer.innerHTML = mapHtml;
+            }
+        }
+
+        function buyMap(idx) {
+            const m = MAP_ENVIRONMENTS[idx];
+            if (!m.unlocked && totalCoins >= m.cost) {
+                totalCoins -= m.cost;
+                m.unlocked = true;
+                equipMap(idx);
+            }
+        }
+
+        function equipMap(idx) {
+            currentMapIndex = idx;
+            updateGrassTexture(MAP_ENVIRONMENTS[idx]);
+            updateUpgradesUI();
+        }
+
+        function buyCar(idx) {
+            const c = CAR_TYPES[idx];
+            if (!c.owned && totalCoins >= c.cost) {
+                totalCoins -= c.cost;
+                c.owned = true;
+                equipCar(idx);
+                updateUpgradesUI();
+            }
+        }
+
+        function equipCar(idx) {
+            currentCarIndex = idx;
+            buildPlayerCar(idx);
+            
+            const colorPicker = document.getElementById('car-color-picker');
+            if (colorPicker) {
+                colorPicker.value = '#' + CAR_TYPES[currentCarIndex].color.toString(16).padStart(6, '0');
+            }
+            
+            updateUpgradesUI();
         }
 
         function buyTraction() {
@@ -1102,9 +1448,36 @@
             }
         }
 
+        function buyToughTires() {
+            if (!toughTiresOwned && totalCoins >= 300) {
+                totalCoins -= 300; 
+                toughTiresOwned = true; 
+                updateUpgradesUI();
+            }
+        }
+
+        function buyPaintColor() {
+            if (totalCoins >= 200) {
+                totalCoins -= 200;
+                const hexColor = document.getElementById('car-color-picker').value;
+                CAR_TYPES[currentCarIndex].color = parseInt(hexColor.replace('#', '0x'), 16);
+                
+                buildPlayerCar(currentCarIndex);
+                
+                if(typeof playPowerupSound === 'function') playPowerupSound();
+                updateUpgradesUI();
+            }
+        }
+
         function openUpgrades() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('upgrades-ui').style.display = 'flex';
+            
+            const colorPicker = document.getElementById('car-color-picker');
+            if (colorPicker) {
+                colorPicker.value = '#' + CAR_TYPES[currentCarIndex].color.toString(16).padStart(6, '0');
+            }
+            
             updateUpgradesUI();
         }
         function closeUpgrades() {
@@ -1132,7 +1505,7 @@
             showMainMenu();
         }
 
-        function showMainMenu(title = "PIXEL PANIC", subtitle = "", isCrash = false) {
+        function showMainMenu(title = "PIXEL RACING", subtitle = "", isCrash = false) {
             isGameRunning = false;
             gameMode = 'menu';
             invertEndTime = 0; 
@@ -1140,6 +1513,7 @@
             slowEndTime = 0;
             cheatCodeInput = ""; // Reset cheat code sequence on menu load
             document.body.style.filter = 'none'; 
+            document.getElementById('zone-alert').style.display = 'none';
             if (audioCtx && engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
             
             document.getElementById('ui').style.display = 'none';
@@ -1158,7 +1532,7 @@
         function exitToMenu() {
             let earned = Math.floor(distanceTraveled / 10);
             totalCoins += earned;
-            showMainMenu("PIXEL PANIC", `<span style="color:#00ffff;">Distance Bonus: +${earned} Coins</span>`);
+            showMainMenu("PIXEL RACING", `<span style="color:#00ffff;">Distance Bonus: +${earned} Coins</span>`);
         }
 
         function startGame(mode, difficulty = 'normal') {
@@ -1168,6 +1542,7 @@
             document.getElementById('ui').style.display = 'flex';
             
             let armorBonus = armorLevel * 20;
+            const activeCar = CAR_TYPES[currentCarIndex];
 
             if (mode === 'endless') {
                 if (difficulty === 'easy') { maxSpeed = 0.35; health = 100 + armorBonus; }
@@ -1178,7 +1553,14 @@
                 health = 100 + armorBonus;    
             }
 
+            // Apply vehicle stat modifiers
+            maxSpeed *= activeCar.speedMult;
+            health = Math.floor(health * activeCar.armorMult);
             maxHealth = health; // Set the health cap for this run
+
+            ACCELERATION = 0.006 * activeCar.accelMult;
+            // Lowered turning multipliers and base to fix sensitivity
+            TURN_SPEED = (0.018 * activeCar.tractionMult) + (tractionLevel * 0.003);
 
             speed = 0; 
             angle = 0;
@@ -1187,14 +1569,22 @@
             invertEndTime = 0; 
             boostEndTime = 0;
             slowEndTime = 0;
+            currentZone = 'normal';
+            zoneNextChangeZ = -1000;
+            currentRoadWidth = ROAD_WIDTH;
+            if (endlessRoad) endlessRoad.scale.x = 1.0;
+
+            document.getElementById('zone-alert').style.display = 'none';
+            
             document.body.style.filter = 'none'; 
             car.position.set(0, 0, 0);
             car.rotation.y = 0; 
             carBodyGroup.rotation.z = 0;
+            carBodyGroup.rotation.x = 0;
             
             document.getElementById('speedometer').innerText = "0 MPH";
             document.getElementById('health-bar').innerText = "Health: " + health;
-            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SHIFT]`;
+            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SPACE]`;
 
             if (mode === 'endless') {
                 endlessGroup.visible = true;
@@ -1263,59 +1653,20 @@
             showMainMenu('YOU WIN!', subtitle, false);
         }
 
-        // --- Builder Keybind Map ---
-        const builderKeyMap = {
-            '1': 'road',
-            '2': 'grass',
-            '3': 'tree',
-            '4': 'rock',
-            '5': 'trash',
-            '6': 'pinktrash',
-            '7': 'car',
-            '8': 'rager',
-            '9': 'crash',
-            '0': 'ramp',
-            'q': 'gas',
-            'e': 'pothole',
-            'r': 'autoshop'
-        };
-
-        function selectBuilderTool(toolName) {
-            currentTool = toolName;
-            document.querySelectorAll('.tool-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.tool === toolName);
-            });
-        }
-
         // --- Input Handling ---
         window.addEventListener('keydown', (e) => {
-            // F3 Debug Toggle
-            if (e.key === 'F3') {
-                e.preventDefault();
-                toggleDebug();
-                return;
-            }
-
-            // Builder mode keybinds
-            if (gameMode === 'builder') {
-                const tool = builderKeyMap[e.key.toLowerCase()];
-                if (tool) {
-                    selectBuilderTool(tool);
-                    return;
-                }
-            }
             if (e.key === 'a' || e.key === 'A') keys.a = true;
             if (e.key === 'd' || e.key === 'D') keys.d = true;
             if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.up = true;
             if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') keys.down = true;
 
             // Trigger Nitro Boost
-            if ((e.key === 'Shift') && isGameRunning) {
+            if ((e.code === 'Space' || e.key === ' ') && isGameRunning) {
                 if (nitroCount > 0 && Date.now() > boostEndTime) {
                     nitroCount--;
                     boostEndTime = Date.now() + 4000; // 4 seconds boost
                     playBoostSound();
-                    document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SHIFT]`;
+                    document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SPACE]`;
                 }
             }
 
@@ -1334,6 +1685,7 @@
                     // Apply Cheat
                     tractionLevel = Math.min(tractionLevel + 2, MAX_UPGRADE_LEVEL);
                     armorLevel = Math.min(armorLevel + 2, MAX_UPGRADE_LEVEL);
+                    toughTiresOwned = true;
                     
                     // Reset input so it can be used again
                     cheatCodeInput = ""; 
@@ -1399,6 +1751,8 @@
                     tractionLevel = MAX_UPGRADE_LEVEL;
                     armorLevel = MAX_UPGRADE_LEVEL;
                     nitroCount = 9999;
+                    toughTiresOwned = true;
+                    MAP_ENVIRONMENTS.forEach(m => m.unlocked = true); // Unlock all maps
                     
                     // Reset input so it can be used again
                     cheatCodeInput = ""; 
@@ -1489,8 +1843,8 @@
                         obs.visible = false;
                         playHitSound();
                     } else {
-                        if (obs.userData.type === 'crash') {
-                            // The car crash obstacle always crashes you
+                        if (obs.userData.type === 'crash' || obs.userData.type === 'tree' || obs.userData.type === 'rock' || obs.userData.type === 'rolling_rock') {
+                            // The car crash, trees, and rocks always crash you instantly
                             crashGame('obstacle');
                         } else {
                             obs.visible = false; 
@@ -1522,115 +1876,28 @@
         }
 
 
-        // --- Debug System ---
-        let debugActive = false;
-        let debugFrameCount = 0;
-        let debugLastTime = performance.now();
-        let debugFPS = 0;
-        let debugCollisionBoxes = [];
-        let debugCarBox = null;
-
-        const debugOverlay = document.getElementById('debug-overlay');
-        const debugFPSEl = document.getElementById('debug-fps');
-        const debugSpeedEl = document.getElementById('debug-speed');
-        const debugPositionEl = document.getElementById('debug-position');
-        const debugAngleEl = document.getElementById('debug-angle');
-        const debugCollisionsEl = document.getElementById('debug-collisions');
-
-        function toggleDebug() {
-            debugActive = !debugActive;
-            debugOverlay.style.display = debugActive ? 'block' : 'none';
-            if (debugActive) {
-                showCollisionBoxes();
-            } else {
-                hideCollisionBoxes();
-            }
-        }
-
-        function createCollisionHelper(sizeX, sizeY, sizeZ, color) {
-            const geo = new THREE.BoxGeometry(sizeX, sizeY, sizeZ);
-            const edges = new THREE.EdgesGeometry(geo);
-            const mat = new THREE.LineBasicMaterial({ color: color });
-            return new THREE.LineSegments(edges, mat);
-        }
-
-        function showCollisionBoxes() {
-            hideCollisionBoxes();
-
-            // Car collision box
-            debugCarBox = createCollisionHelper(2.2 * 2, 2, 3.0 * 2, 0x00ff00);
-            debugCarBox.position.y = 1;
-            car.add(debugCarBox);
-
-            // Obstacle collision boxes
-            const obstacles = gameMode === 'endless' ? endlessObstacles : (gameMode === 'custom' ? customObstacles : []);
-            obstacles.forEach(obs => {
-                if (!obs.visible) return;
-                let hitX = 2.2;
-                let hitZ = 3.0;
-                if (obs.userData.type === 'autoshop') {
-                    hitX = 5.0;
-                    hitZ = 10.0;
-                }
-                const helper = createCollisionHelper(hitX * 2, 2, hitZ * 2, 0xff0000);
-                helper.position.y = 1;
-                obs.add(helper);
-                debugCollisionBoxes.push(helper);
-            });
-
-            debugCollisionsEl.textContent = 'Boxes: ON (' + (obstacles.length + 1) + ')';
-        }
-
-        function hideCollisionBoxes() {
-            if (debugCarBox) {
-                car.remove(debugCarBox);
-                debugCarBox = null;
-            }
-            debugCollisionBoxes.forEach(h => {
-                if (h.parent) h.parent.remove(h);
-            });
-            debugCollisionBoxes = [];
-            debugCollisionsEl.textContent = 'Boxes: OFF';
-        }
-
-        function updateDebugInfo() {
-            if (!debugActive) return;
-
-            // FPS calculation
-            debugFrameCount++;
-            const now = performance.now();
-            const elapsed = now - debugLastTime;
-            if (elapsed >= 500) {
-                debugFPS = Math.round((debugFrameCount / elapsed) * 1000);
-                debugFrameCount = 0;
-                debugLastTime = now;
-            }
-            debugFPSEl.textContent = 'FPS: ' + debugFPS;
-
-            // Player info
-            const displaySpeed = Math.abs(Math.floor((speed / BASE_MAX_SPEED) * 10));
-            debugSpeedEl.textContent = 'Speed: ' + speed.toFixed(4) + ' (' + displaySpeed + ' MPH)';
-            debugPositionEl.textContent = 'Pos: ' + car.position.x.toFixed(1) + ', ' + car.position.y.toFixed(1) + ', ' + car.position.z.toFixed(1);
-            debugAngleEl.textContent = 'Angle: ' + (angle * (180 / Math.PI)).toFixed(1) + '°';
-
-            // Refresh collision boxes periodically (obstacles move/respawn)
-            if (isGameRunning && debugFrameCount === 0) {
-                showCollisionBoxes();
-            }
-        }
-
         // --- Main Game Loop ---
         const speedUI = document.getElementById('speedometer');
 
         function animate() {
             requestAnimationFrame(animate);
-            updateDebugInfo();
 
             if (isGameRunning) {
                 const isInvincible = Date.now() < boostEndTime;
                 
+                let targetRoadScale = currentZone === 'valley' ? 1.8 : 1.0;
+                if (endlessRoad && gameMode === 'endless') {
+                    endlessRoad.scale.x += (targetRoadScale - endlessRoad.scale.x) * 0.05;
+                    currentRoadWidth = ROAD_WIDTH * endlessRoad.scale.x;
+                } else {
+                    currentRoadWidth = ROAD_WIDTH;
+                }
+
                 // 1. Collision & Rules depending on mode
                 let inPitStop = false;
+                let isOffRoad = false;
+                const isJeepWithTires = (CAR_TYPES[currentCarIndex].id === 'jeep' && toughTiresOwned);
+
                 if (gameMode === 'endless') {
                     endlessObstacles.forEach(obs => {
                         if (obs.userData.type === 'autoshop') {
@@ -1640,8 +1907,10 @@
                         }
                     });
 
-                    if (!isInvincible && car.position.y <= 0.1 && Math.abs(car.position.x) > (ROAD_WIDTH / 2)) {
-                        if (!inPitStop) crashGame('grass');
+                    isOffRoad = Math.abs(car.position.x) > (currentRoadWidth / 2 - 1) && !inPitStop;
+
+                    if (!isInvincible && car.position.y <= 0.1 && Math.abs(car.position.x) > (currentRoadWidth / 2)) {
+                        if (!inPitStop && !isJeepWithTires) crashGame('grass');
                     }
                 } else if (gameMode === 'custom') {
                     if (car.position.z < - (GRID_ROWS - 1) * CELL_SIZE) {
@@ -1653,11 +1922,18 @@
                     const carRow = Math.floor(-car.position.z / CELL_SIZE);
                     
                     if (carRow < 0 || carRow >= GRID_ROWS || carCol < 0 || carCol >= GRID_COLS) {
-                        if (!isInvincible && car.position.y <= 0.1) crashGame('grass');
+                        isOffRoad = true;
+                        if (!isInvincible && car.position.y <= 0.1 && !isJeepWithTires) crashGame('grass');
                     } else {
                         const cellType = mapData[carRow][carCol];
+                        if (cellType === 'grass') isOffRoad = true;
+
                         if (!isInvincible && car.position.y <= 0.1 && (cellType === 'grass' || cellType === 'tree' || cellType === 'rock' || cellType === 'crash')) {
-                            crashGame(cellType === 'grass' ? 'grass' : 'obstacle');
+                            if (cellType === 'grass' && isJeepWithTires) {
+                                // Jeep with tough tires survives grass
+                            } else {
+                                crashGame(cellType === 'grass' ? 'grass' : 'obstacle');
+                            }
                         }
                     }
                 }
@@ -1676,13 +1952,12 @@
                 }
 
                 // 2. Physics & Control
-                const isOffRoad = gameMode === 'endless' && Math.abs(car.position.x) > (ROAD_WIDTH / 2 - 1) && !inPitStop;
                 const isSlowed = Date.now() < slowEndTime;
                 
                 // Speed calculation factoring in invincibility boost, offroad, and slow effect
                 let currentMaxSpeed = maxSpeed;
                 if (isInvincible) currentMaxSpeed = maxSpeed * 1.6;
-                else if (isOffRoad) currentMaxSpeed = OFFROAD_MAX_SPEED;
+                else if (isOffRoad) currentMaxSpeed = isJeepWithTires ? (maxSpeed * 0.8) : OFFROAD_MAX_SPEED;
                 else if (isSlowed) currentMaxSpeed = maxSpeed * 0.4;
                 
                 let currentAccel = ACCELERATION;
@@ -1707,8 +1982,8 @@
                 let targetTilt = 0;
                 if (Math.abs(speed) > 0.05) {
                     const dir = speed > 0 ? 1 : -1;
-                    // Apply Traction Upgrade here:
-                    const currentTurnSpeed = TURN_SPEED + (tractionLevel * 0.005); 
+                    // Fixed bug where traction upgrade was being applied twice, making it too sensitive
+                    const currentTurnSpeed = TURN_SPEED; 
                     
                     if (keys.a) { angle += currentTurnSpeed * dir; targetTilt = 0.15; }
                     if (keys.d) { angle -= currentTurnSpeed * dir; targetTilt = -0.15; }
@@ -1720,45 +1995,118 @@
                 car.position.x -= Math.sin(angle) * speed;
                 car.position.z -= Math.cos(angle) * speed;
 
+                // --- INVISIBLE WALL ---
+                const MAX_OFFROAD_X = (currentRoadWidth / 2) + 20; // Limits how far off-road you can drive
+                if (car.position.x > MAX_OFFROAD_X) car.position.x = MAX_OFFROAD_X;
+                if (car.position.x < -MAX_OFFROAD_X) car.position.x = -MAX_OFFROAD_X;
+                // ----------------------
+
                 // 3. World Updates & Objects
                 if (gameMode === 'endless') {
-                    endlessGround.position.x = car.position.x; endlessGround.position.z = car.position.z;
-                    grassTexture.offset.x = (car.position.x / 1000) * 100; grassTexture.offset.y = -(car.position.z / 1000) * 100;
+                    // Zone Management
+                    if (car.position.z < zoneNextChangeZ) {
+                        const zones = ['normal', 'forest', 'valley'];
+                        let nextZone = zones[Math.floor(Math.random() * zones.length)];
+                        if (nextZone === currentZone) nextZone = 'normal'; // Bias towards changing
+                        currentZone = nextZone;
+                        
+                        zoneNextChangeZ = car.position.z - (currentZone === 'normal' ? 2500 : 1500);
+                        
+                        const zAlert = document.getElementById('zone-alert');
+                        if (currentZone === 'forest') {
+                            zAlert.innerText = "ENTERING DENSE FOREST!";
+                            zAlert.style.color = "#3a873a";
+                        } else if (currentZone === 'valley') {
+                            zAlert.innerText = "ROCKY VALLEY! ROAD WIDENS!";
+                            zAlert.style.color = "#aaaaaa";
+                        } else {
+                            zAlert.innerText = "CLEARING THE AREA";
+                            zAlert.style.color = "#87CEEB";
+                        }
+                        zAlert.style.display = 'block';
+                        setTimeout(() => { zAlert.style.display = 'none'; }, 3000);
+                    }
+
+                    // Keep ground centered on the road instead of following the car sideways
+                    endlessGround.position.x = 0; endlessGround.position.z = car.position.z;
+                    grassTexture.offset.x = 0; grassTexture.offset.y = -(car.position.z / 1000) * 100;
                     endlessRoad.position.z = car.position.z;
                     roadTexture.offset.y = -(car.position.z / (CHUNK_SIZE + 100)) * ((CHUNK_SIZE + 100) / 10);
 
                     endlessProps.forEach(prop => {
+                        // Push trees/rocks out of the way dynamically as the road widens
+                        const minEdge = (currentRoadWidth / 2) + 1.5;
+                        if (Math.abs(prop.position.x) < minEdge) {
+                            prop.position.x += Math.sign(prop.position.x || 1) * 0.5; // Smoothly slide out
+                        }
+
                         if (prop.position.z > car.position.z + 20) {
                             prop.position.z -= CHUNK_SIZE;
-                            prop.position.x = (Math.random() > 0.5 ? 1 : -1) * ((ROAD_WIDTH / 2 + 5) + Math.random() * 80);
+                            
+                            // Adjust spawning based on current zone and road width
+                            if (currentZone === 'forest') {
+                                // Super thick forest: heavy clustering right on the road edge
+                                const cluster = Math.pow(Math.random(), 3) * 25; 
+                                prop.position.x = (Math.random() > 0.5 ? 1 : -1) * ((currentRoadWidth / 2 + 2.5) + cluster);
+                            } else {
+                                // Normal/Valley zone: spread out but not too far
+                                prop.position.x = (Math.random() > 0.5 ? 1 : -1) * ((currentRoadWidth / 2 + 4) + Math.random() * 25);
+                            }
+                            
+                            // AVOID AUTO SHOPS: Check if we just spawned inside a shop
+                            endlessObstacles.forEach(obs => {
+                                if (obs.userData.type === 'autoshop') {
+                                    if (Math.abs(prop.position.z - obs.position.z) < 50 && Math.sign(prop.position.x) === Math.sign(obs.position.x)) {
+                                        prop.position.x = Math.sign(prop.position.x) * ((currentRoadWidth / 2) + 25 + Math.random() * 15);
+                                    }
+                                }
+                            });
+
+                            prop.userData.hit = false;
+                            prop.visible = true;
                         }
                         if (prop.position.z < car.position.z - CHUNK_SIZE + 20) prop.position.z += CHUNK_SIZE;
+
+                        // OPTIMIZATION: Only calculate collisions for scenery that is within driving range
+                        if (Math.abs(prop.position.x) < MAX_OFFROAD_X + 5) {
+                            handleObstacleCollision(prop);
+                        }
                     });
 
                     endlessObstacles.forEach(obs => {
-                        if (obs.userData.type === 'car') obs.position.z -= obs.userData.speed;
-                        if (obs.userData.type === 'rager') {
-                            obs.position.z -= obs.userData.speed;
-                            if (obs.position.z < car.position.z && obs.position.z > car.position.z - 150) {
-                                // Add a turn delay so the player can juke the rager
-                                obs.userData.turnDelay = (obs.userData.turnDelay || 0) - 1;
-                                if (obs.userData.turnDelay <= 0) {
-                                    obs.userData.targetX = car.position.x;
-                                    obs.userData.turnDelay = 20; // Frames before updating target
-                                }
-                                
-                                let targetX = obs.userData.targetX !== undefined ? obs.userData.targetX : car.position.x;
+                        if (obs.visible) {
+                            if (obs.userData.type === 'car') obs.position.z -= obs.userData.speed;
+                            if (obs.userData.type === 'rager') {
+                                obs.position.z -= obs.userData.speed;
+                                if (obs.position.z < car.position.z && obs.position.z > car.position.z - 150) {
+                                    // Add a turn delay so the player can juke the rager
+                                    obs.userData.turnDelay = (obs.userData.turnDelay || 0) - 1;
+                                    if (obs.userData.turnDelay <= 0) {
+                                        obs.userData.targetX = car.position.x;
+                                        obs.userData.turnDelay = 20; // Frames before updating target
+                                    }
+                                    
+                                    let targetX = obs.userData.targetX !== undefined ? obs.userData.targetX : car.position.x;
 
-                                if (obs.position.x < targetX - 0.5) {
-                                    obs.position.x += 0.10; obs.rotation.y = -0.2;
-                                } else if (obs.position.x > targetX + 0.5) {
-                                    obs.position.x -= 0.10; obs.rotation.y = 0.2;
+                                    if (obs.position.x < targetX - 0.5) {
+                                        obs.position.x += 0.10; obs.rotation.y = -0.2;
+                                    } else if (obs.position.x > targetX + 0.5) {
+                                        obs.position.x -= 0.10; obs.rotation.y = 0.2;
+                                    } else {
+                                        obs.rotation.y = 0;
+                                    }
                                 } else {
                                     obs.rotation.y = 0;
                                 }
-                            } else {
-                                obs.rotation.y = 0;
                             }
+                            if (obs.userData.type === 'rolling_rock') {
+                                obs.position.x += obs.userData.speedX;
+                                obs.rotation.z += obs.userData.rotZDir;
+                                obs.rotation.x += obs.userData.rotZDir; // Extra tumble
+                                obs.position.z -= 0.1; // Roll down the road slightly toward player
+                            }
+
+                            handleObstacleCollision(obs);
                         }
 
                         let despawnDistance = 20;
@@ -1767,29 +2115,41 @@
                         }
 
                         if (obs.position.z > car.position.z + despawnDistance) {
+                            // Revert respawning back to original massive traffic distance logic
                             obs.position.z = car.position.z - CHUNK_SIZE - Math.random() * CHUNK_SIZE;
                             
                             if (obs.userData.type === 'autoshop') {
-                                obs.position.x = (Math.random() > 0.5 ? 1 : -1) * (ROAD_WIDTH / 2 + 5);
+                                obs.position.x = (Math.random() > 0.5 ? 1 : -1) * (currentRoadWidth / 2 + 5);
+                            } else if (obs.userData.type === 'rolling_rock') {
+                                obs.position.x = (Math.random() > 0.5 ? 1 : -1) * (currentRoadWidth / 2 + 10);
+                                obs.userData.speedX = -Math.sign(obs.position.x) * (0.05 + Math.random() * 0.15);
+                                obs.userData.rotZDir = Math.sign(obs.position.x) * 0.1;
                             } else {
-                                obs.position.x = (Math.random() - 0.5) * (ROAD_WIDTH - 6);
+                                obs.position.x = (Math.random() - 0.5) * (currentRoadWidth - 6);
                             }
                             
                             obs.userData.hit = false; 
-                            obs.visible = true;       
-                            if (obs.userData.type === 'autoshop') {
-                                const cross = obs.getObjectByName('healCross');
-                                if (cross) cross.visible = true;
-                            }
+                            
+                            // Handle Dynamic Spawning Visibility Based on Current Zone
                             if (obs.userData.type === 'car' || obs.userData.type === 'rager') {
+                                // Vastly deplete cars in the valley to make room for dodging rocks
+                                obs.visible = !(currentZone === 'valley' && Math.random() < 0.75); 
+                                
                                 obs.userData.speed = 0.05 + Math.random() * 0.15;
                                 if (obs.userData.type === 'rager') obs.userData.speed *= 1.5;
                                 if (endlessDifficulty === 'easy') obs.userData.speed -= 0.02;
                                 if (endlessDifficulty === 'hard') obs.userData.speed += 0.05;
+                            } else if (obs.userData.type === 'rolling_rock') {
+                                obs.visible = (currentZone === 'valley');
+                            } else {
+                                obs.visible = true;       
+                            }
+
+                            if (obs.userData.type === 'autoshop') {
+                                const cross = obs.getObjectByName('healCross');
+                                if (cross) cross.visible = true;
                             }
                         }
-
-                        handleObstacleCollision(obs);
                     });
                 } else if (gameMode === 'custom') {
                     customObstacles.forEach(obs => {
@@ -1824,7 +2184,7 @@
 
                 if (!isGameRunning) return; 
 
-                // Lighting & Aesthetics update
+                // Light position update
                 dirLight.position.set(car.position.x + 50, 100, car.position.z + 20);
                 dirLight.target = car;
 
@@ -1837,11 +2197,11 @@
                     document.body.style.filter = 'none';
                 }
 
-                // Glowing Car during boost
+                // Visual Effects updates for Invincibility
                 if (isInvincible) {
-                    carChassisMesh.material.emissive.setHex(0xffaa00);
+                    carBodyGroup.position.x = (Math.random() - 0.5) * 0.1;
                 } else {
-                    carChassisMesh.material.emissive.setHex(0x000000);
+                    carBodyGroup.position.x = 0;
                 }
 
                 const displaySpeed = Math.abs(Math.floor((speed / BASE_MAX_SPEED) * 10)); 
@@ -1872,10 +2232,6 @@
             arcCanvas = document.getElementById('arcadeCanvas');
             arcCtx = arcCanvas.getContext('2d');
             isArcadeRunning = true;
-            initAudio();
-            if (audioCtx) {
-                nextNoteTime = audioCtx.currentTime + 0.1;
-            }
             arcGameOver = false;
             arcCar.x = 185;
             arcObs = [];
@@ -1893,7 +2249,6 @@
         function arcadeLoop() {
             if (!isArcadeRunning) return;
             requestAnimationFrame(arcadeLoop);
-            updateAudio();
 
             if (arcGameOver) return;
 
