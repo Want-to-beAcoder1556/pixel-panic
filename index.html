@@ -434,6 +434,16 @@
                 </label>
             </div>
 
+            <!-- NEW TEST SETTINGS CONTROLS (ANY CAR/MAP) -->
+            <div style="margin-top: 15px; padding: 10px; background: #222; border: 1px solid #555; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #00ffff;">Test Settings</h4>
+                <label style="font-size: 12px; color: #aaa;">Test Vehicle:</label>
+                <select id="builder-car-select" style="width: 100%; margin-bottom: 10px; background: #111; color: white; border: 1px solid #555; padding: 5px;"></select>
+                
+                <label style="font-size: 12px; color: #aaa;">Test Environment:</label>
+                <select id="builder-map-select" style="width: 100%; background: #111; color: white; border: 1px solid #555; padding: 5px;"></select>
+            </div>
+
             <!-- NEW PROPERTIES CONTROLS -->
             <div style="margin-top: 15px; padding: 10px; background: #222; border: 1px solid #555; border-radius: 5px;">
                 <h4 style="margin: 0 0 10px 0; color: #ffcc00;">Item Properties</h4>
@@ -597,6 +607,8 @@
             { id: 'lambo', name: 'Hyper Lambo', cost: 2000, speedMult: 1.4, accelMult: 1.5, tractionMult: 1.2, armorMult: 0.6, color: 0x39ff14, owned: false }
         ];
         let currentCarIndex = 0;
+        let runningCarIndex = 0; // Tracks the active car strictly during a run (Endless or Test mode)
+        let runningMapIndex = 0; // Tracks the active map strictly during a run
 
         // Physics variables
         let speed = 0;
@@ -990,7 +1002,8 @@
 
         // --- Fixing ReferenceError: isJeepWithTires is not defined globally ---
         function getJeepWithTiresStatus() {
-            return CAR_TYPES[currentCarIndex].id === 'jeep' && toughTiresOwned;
+            let idx = isGameRunning ? runningCarIndex : currentCarIndex;
+            return CAR_TYPES[idx].id === 'jeep' && (toughTiresOwned || gameMode === 'custom');
         }
 
         function createRock() {
@@ -1372,6 +1385,26 @@
             
             requestAnimationFrame(animateCreatorPreview);
         }
+
+        function initBuilderDropdowns() {
+            const carSelect = document.getElementById('builder-car-select');
+            carSelect.innerHTML = '';
+            CAR_TYPES.forEach((c, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = c.name;
+                carSelect.appendChild(opt);
+            });
+
+            const mapSelect = document.getElementById('builder-map-select');
+            mapSelect.innerHTML = '';
+            MAP_ENVIRONMENTS.forEach((m, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = m.name;
+                mapSelect.appendChild(opt);
+            });
+        }
         
         function animateCreatorPreview() {
             requestAnimationFrame(animateCreatorPreview);
@@ -1550,6 +1583,7 @@
         // --- Delay render until after definitions to be completely safe ---
         setTimeout(() => {
             initCustomItems();
+            initBuilderDropdowns();
             renderBuilderGrid();
         }, 0);
 
@@ -2050,6 +2084,62 @@
             updateUpgradesUI();
         }
 
+        function buyTraction() {
+            if (tractionLevel < MAX_UPGRADE_LEVEL && totalCoins >= getTractionCost()) {
+                totalCoins -= getTractionCost(); tractionLevel++; updateUpgradesUI();
+            }
+        }
+
+        function buyArmor() {
+            if (armorLevel < MAX_UPGRADE_LEVEL && totalCoins >= getArmorCost()) {
+                totalCoins -= getArmorCost(); armorLevel++; updateUpgradesUI();
+            }
+        }
+
+        function buyNitro() {
+            if (totalCoins >= NITRO_COST) {
+                totalCoins -= NITRO_COST; nitroCount++; updateUpgradesUI();
+            }
+        }
+
+        function buyToughTires() {
+            if (!toughTiresOwned && totalCoins >= 300) {
+                totalCoins -= 300; 
+                toughTiresOwned = true; 
+                updateUpgradesUI();
+            }
+        }
+
+        function buyPaintColor() {
+            if (totalCoins >= 200) {
+                totalCoins -= 200;
+                const hexColor = document.getElementById('car-color-picker').value;
+                CAR_TYPES[currentCarIndex].color = parseInt(hexColor.replace('#', '0x'), 16);
+                
+                buildPlayerCar(currentCarIndex);
+                
+                if(typeof playPowerupSound === 'function') playPowerupSound();
+                updateUpgradesUI();
+            }
+        }
+
+        function openUpgrades() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('upgrades-ui').style.display = 'flex';
+            
+            const colorPicker = document.getElementById('car-color-picker');
+            if (colorPicker) {
+                colorPicker.value = '#' + CAR_TYPES[currentCarIndex].color.toString(16).padStart(6, '0');
+            }
+            
+            updateUpgradesUI();
+        }
+
+        function closeUpgrades() {
+            document.getElementById('upgrades-ui').style.display = 'none';
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
         // --- Game Flow Control ---
         
         function openBuilder() {
@@ -2098,6 +2188,10 @@
             const sub = document.getElementById('menu-subtitle');
             if(subtitle) { sub.innerHTML = subtitle; sub.style.display = 'block'; }
             else { sub.style.display = 'none'; }
+
+            // Revert back to the officially equipped map & car for the menu
+            buildPlayerCar(currentCarIndex);
+            updateGrassTexture(MAP_ENVIRONMENTS[currentMapIndex]);
         }
 
         function exitToMenu() {
@@ -2112,8 +2206,21 @@
             document.getElementById('builder-ui').style.display = 'none';
             document.getElementById('ui').style.display = 'flex';
             
+            // Allow testing any map/vehicle in Map Builder without breaking ownership state
+            if (mode === 'custom') {
+                runningCarIndex = parseInt(document.getElementById('builder-car-select').value);
+                runningMapIndex = parseInt(document.getElementById('builder-map-select').value);
+            } else {
+                runningCarIndex = currentCarIndex;
+                runningMapIndex = currentMapIndex;
+            }
+
+            // Sync visuals to the active selections for this run
+            buildPlayerCar(runningCarIndex);
+            updateGrassTexture(MAP_ENVIRONMENTS[runningMapIndex]);
+
             let armorBonus = armorLevel * 20;
-            const activeCar = CAR_TYPES[currentCarIndex];
+            const activeCar = CAR_TYPES[runningCarIndex];
 
             if (mode === 'endless') {
                 if (difficulty === 'easy') { maxSpeed = 0.35; health = 100 + armorBonus; }
