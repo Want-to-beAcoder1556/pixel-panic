@@ -988,6 +988,11 @@
             return tree;
         }
 
+        // --- Fixing ReferenceError: isJeepWithTires is not defined globally ---
+        function getJeepWithTiresStatus() {
+            return CAR_TYPES[currentCarIndex].id === 'jeep' && toughTiresOwned;
+        }
+
         function createRock() {
             const size = 1 + Math.random() * 2;
             const rock = new THREE.Mesh(new THREE.BoxGeometry(size, size*0.8, size), new THREE.MeshLambertMaterial({ color: 0x888888 }));
@@ -1892,7 +1897,7 @@
                                 obj.userData.instantCrash = itemData.instant !== undefined ? itemData.instant : (type === 'tree' || type === 'rock' || type === 'crash');
                             }
 
-                            if (type === 'ramp') obj.position.y += 0.5; // Visual fix so ramp isn't totally clipping through
+                            if (type === 'ramp') obj.position.y += 0.5; // Visual fix so ramp isnt totally clipping through
                             customGroup.add(obj);
                             customObstacles.push(obj);
                             currentY += height; // Add height to the stack for the next item!
@@ -2043,59 +2048,6 @@
             }
             
             updateUpgradesUI();
-        }
-
-        function buyTraction() {
-            if (tractionLevel < MAX_UPGRADE_LEVEL && totalCoins >= getTractionCost()) {
-                totalCoins -= getTractionCost(); tractionLevel++; updateUpgradesUI();
-            }
-        }
-        function buyArmor() {
-            if (armorLevel < MAX_UPGRADE_LEVEL && totalCoins >= getArmorCost()) {
-                totalCoins -= getArmorCost(); armorLevel++; updateUpgradesUI();
-            }
-        }
-        function buyNitro() {
-            if (totalCoins >= NITRO_COST) {
-                totalCoins -= NITRO_COST; nitroCount++; updateUpgradesUI();
-            }
-        }
-
-        function buyToughTires() {
-            if (!toughTiresOwned && totalCoins >= 300) {
-                totalCoins -= 300; 
-                toughTiresOwned = true; 
-                updateUpgradesUI();
-            }
-        }
-
-        function buyPaintColor() {
-            if (totalCoins >= 200) {
-                totalCoins -= 200;
-                const hexColor = document.getElementById('car-color-picker').value;
-                CAR_TYPES[currentCarIndex].color = parseInt(hexColor.replace('#', '0x'), 16);
-                
-                buildPlayerCar(currentCarIndex);
-                
-                if(typeof playPowerupSound === 'function') playPowerupSound();
-                updateUpgradesUI();
-            }
-        }
-
-        function openUpgrades() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('upgrades-ui').style.display = 'flex';
-            
-            const colorPicker = document.getElementById('car-color-picker');
-            if (colorPicker) {
-                colorPicker.value = '#' + CAR_TYPES[currentCarIndex].color.toString(16).padStart(6, '0');
-            }
-            
-            updateUpgradesUI();
-        }
-        function closeUpgrades() {
-            document.getElementById('upgrades-ui').style.display = 'none';
-            document.getElementById('overlay').style.display = 'flex';
         }
 
         // --- Game Flow Control ---
@@ -2536,6 +2488,9 @@
 
                 // 1. Collision & Rules depending on mode
                 let inPitStop = false;
+                let isOffRoad = false; 
+                const isJeepWithTires = getJeepWithTiresStatus();
+
                 if (gameMode === 'endless') {
                     endlessObstacles.forEach(obs => {
                         if (obs.userData.type === 'autoshop') {
@@ -2599,7 +2554,6 @@
                 }
 
                 // 2. Physics & Control
-                let isOffRoad = false;
                 if (gameMode === 'endless') {
                     isOffRoad = Math.abs(car.position.x) > (ROAD_WIDTH / 2 - 1) && !inPitStop;
                 } else if (gameMode === 'custom') {
