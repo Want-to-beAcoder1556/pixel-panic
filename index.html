@@ -169,6 +169,35 @@
         .icon-pothole { background: #111; border-radius: 50%; box-shadow: inset 2px 2px 5px #000; }
         .icon-autoshop { background: #555; position: relative; }
         .icon-autoshop::after { content: '+'; color: #33ff33; font-weight: bold; position: absolute; top: -2px; left: 4px; }
+        .icon-turbo { background: #00ffff; position: relative; }
+        .icon-turbo::after { content: '>>'; color: #000; font-size: 10px; font-weight:bold; display: flex; justify-content: center; align-items: center; position: absolute; top:1px; left:1px; right:1px; bottom:1px; background: #00ffff; border: 1px solid #000; letter-spacing:-2px;}
+        .icon-coin { background: #ffd700; border-radius: 50%; position: relative; }
+        .icon-coin::after { content: '$'; color: #b8860b; font-size: 10px; font-weight:bold; display: flex; justify-content: center; align-items: center; position: absolute; top:2px; left:2px; right:2px; bottom:2px; background: #ffd700; border-radius: 50%; border: 1px solid #000; }
+
+        /* Custom Item Icons */
+        .icon-custom0 { background: #ff00ff; color: #fff; font-size:10px; display:flex; align-items:center; justify-content:center; }
+        .icon-custom1 { background: #00ffff; color: #000; font-size:10px; display:flex; align-items:center; justify-content:center; }
+        .icon-custom2 { background: #ffff00; color: #000; font-size:10px; display:flex; align-items:center; justify-content:center; }
+        .icon-custom3 { background: #ffffff; color: #000; font-size:10px; display:flex; align-items:center; justify-content:center; }
+
+        /* New Edit Tool & Selection Styling */
+        .icon-edit { background: #3366ff; display:flex; align-items:center; justify-content:center; font-size:12px; }
+        .cell-selected { box-shadow: inset 0 0 0 2px #ffcc00, 0 0 10px #ffcc00; z-index: 5; border-radius: 2px; }
+
+        /* Directional Arrow for Map Builder */
+        .dir-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-bottom: 6px solid #fff;
+            z-index: 10;
+            pointer-events: none;
+            filter: drop-shadow(1px 1px 0px #000) drop-shadow(-1px -1px 0px #000);
+        }
 
         #builder-workspace {
             flex-grow: 1;
@@ -177,7 +206,7 @@
             padding: 40px;
             display: flex;
             justify-content: center;
-            align-items: flex-end; /* Start at bottom */
+            align-items: flex-start; /* Start at top/center so it's not cut off */
             background: #1a1a1a;
         }
 
@@ -195,6 +224,9 @@
             position: relative;
         }
         
+        /* Finish line visually on top row */
+        .finish-line-row .cell-road { background-image: repeating-linear-gradient(45deg, #fff 0, #fff 5px, #000 5px, #000 10px); }
+
         /* Visuals for grid items */
         .cell-road { background-color: #666; }
         .cell-tree::after { content: ''; position: absolute; top:1px; left:1px; right:1px; bottom:1px; background: #2e8b57; border-radius: 50%; border: 1px solid #000; }
@@ -208,9 +240,28 @@
         .cell-gas::after { content: ''; position: absolute; top:2px; left:2px; right:2px; bottom:2px; background: #ff0000; border: 1px solid #000; }
         .cell-pothole::after { content: ''; position: absolute; top:2px; left:2px; right:2px; bottom:2px; background: #111; border-radius: 50%; border: 1px solid #000; }
         .cell-autoshop::after { content: '+'; color: #33ff33; font-size: 10px; display: flex; justify-content: center; align-items: center; position: absolute; top:1px; left:1px; right:1px; bottom:1px; background: #555; border: 1px solid #000; }
-        
-        /* Finish line visually on top row */
-        .finish-line-row .cell-road { background-image: repeating-linear-gradient(45deg, #fff 0, #fff 5px, #000 5px, #000 10px); }
+
+        /* Item Creator Modal Styles */
+        #item-creator-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 40; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .creator-panel {
+            background: #222; border: 4px solid #555; padding: 20px; border-radius: 8px;
+            width: 800px; max-width: 95vw; display: flex; flex-direction: row; gap: 20px; flex-wrap: wrap;
+        }
+        .creator-controls {
+            flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 300px;
+        }
+        .creator-preview-container {
+            width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            background: #111; border: 2px solid #444; border-radius: 8px; padding: 10px;
+        }
+        .creator-row { display: flex; justify-content: space-between; align-items: center; }
+        .slot-btn { padding: 10px; background: #333; color: white; border: 2px solid #555; cursor: pointer; flex: 1; margin: 0 2px;}
+        .slot-btn.active { border-color: #ffcc00; background: #555; }
+        .slot-btn:hover:not(.active) { background: #444; }
 
         /* Arcade UI */
         #arcade-ui {
@@ -328,6 +379,7 @@
     <div id="builder-ui">
         <div id="builder-toolbar">
             <h2>MAP BUILDER</h2>
+            <button class="tool-btn" data-tool="edit"><div class="tool-icon icon-edit">✏️</div> Select / Edit</button>
             <button class="tool-btn active" data-tool="road"><div class="tool-icon icon-road"></div> Asphalt</button>
             <button class="tool-btn" data-tool="grass"><div class="tool-icon icon-grass"></div> Grass (Eraser)</button>
             <button class="tool-btn" data-tool="tree"><div class="tool-icon icon-tree"></div> Tree</button>
@@ -341,7 +393,19 @@
             <button class="tool-btn" data-tool="gas"><div class="tool-icon icon-gas"></div> Gas Can</button>
             <button class="tool-btn" data-tool="pothole"><div class="tool-icon icon-pothole"></div> Pothole</button>
             <button class="tool-btn" data-tool="autoshop"><div class="tool-icon icon-autoshop"></div> Auto Shop</button>
+            <button class="tool-btn" data-tool="turbo"><div class="tool-icon icon-turbo"></div> Turbo Pad</button>
+            <button class="tool-btn" data-tool="coin"><div class="tool-icon icon-coin"></div> Coin (+5c)</button>
             
+            <!-- Item Creator Tools -->
+            <hr style="border-color: #444; margin: 10px 0;">
+            <button class="btn" style="background:#8b008b; font-size:16px; padding:10px;" onclick="openItemCreator()">🔧 Item Creator</button>
+            <div id="custom-tools-container" style="display: flex; flex-direction: column; gap: 5px; margin-top: 5px;">
+                <button class="tool-btn" data-tool="custom0" id="btn-custom0" style="display:none;"><div class="tool-icon icon-custom0">1</div> <span id="lbl-custom0">Custom 1</span></button>
+                <button class="tool-btn" data-tool="custom1" id="btn-custom1" style="display:none;"><div class="tool-icon icon-custom1">2</div> <span id="lbl-custom1">Custom 2</span></button>
+                <button class="tool-btn" data-tool="custom2" id="btn-custom2" style="display:none;"><div class="tool-icon icon-custom2">3</div> <span id="lbl-custom2">Custom 3</span></button>
+                <button class="tool-btn" data-tool="custom3" id="btn-custom3" style="display:none;"><div class="tool-icon icon-custom3">4</div> <span id="lbl-custom3">Custom 4</span></button>
+            </div>
+
             <!-- NEW BRUSH CONTROLS -->
             <div style="margin-top: 10px;">
                 <span style="color:#aaa; font-size: 14px;">Brush Size:</span>
@@ -362,15 +426,125 @@
                 <button id="btn-load-map" class="tool-btn" onclick="loadMap()" style="flex:1; justify-content: center; padding: 5px; background: #336633;">Load</button>
             </div>
 
+            <!-- NEW MAP SETTINGS CONTROLS -->
+            <div style="margin-top: 15px; padding: 10px; background: #222; border: 1px solid #555; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #ffcc00;">Map Settings</h4>
+                <label style="font-size: 12px; cursor:pointer; color: #33ff33;">
+                    <input type="checkbox" id="setting-lethal-grass" onchange="customGrassLethal=this.checked;"> Grass Instantly Crashes Car
+                </label>
+            </div>
+
+            <!-- NEW PROPERTIES CONTROLS -->
+            <div style="margin-top: 15px; padding: 10px; background: #222; border: 1px solid #555; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #ffcc00;">Item Properties</h4>
+                
+                <label style="font-size: 12px; color: #aaa;">Rotation: <span id="rot-val">0</span>°</label>
+                <input type="range" id="prop-rot" min="0" max="359" value="0" style="width: 100%; margin-bottom: 10px;" oninput="updateToolProperty('rot', this.value)">
+                
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 5px;">
+                    <label style="font-size: 12px; color: #aaa;">Damage on Hit:</label>
+                    <label style="font-size: 12px; cursor:pointer; color: #ff4444;"><input type="checkbox" id="prop-instant" onchange="updateToolProperty('instant', this.checked)"> Instant Crash</label>
+                </div>
+                <input type="range" id="prop-dmg" min="0" max="100" value="10" style="width: 100%;" oninput="updateToolProperty('dmg', this.value)">
+                <div style="font-size: 12px; color: #aaa; text-align: right;" id="dmg-val">10 HP</div>
+            </div>
+
             <div style="flex-grow: 1;"></div>
             <hr style="border-color: #444; margin: 20px 0;">
-            <p style="font-size: 12px; color: #aaa; margin-top:0;">Paint your track. Grass will crash your car! Reach the top row to win.</p>
+            <p style="font-size: 12px; color: #aaa; margin-top:0;">Paint your track. Grass will crash your car! <b>Click a spot multiple times to stack items. Use the Select/Edit tool to tweak placed items!</b></p>
             <button class="btn" style="background:#2e8b57; font-size: 24px; padding: 15px;" onclick="startGame('custom')">PLAY MAP</button>
             <button class="btn" onclick="closeBuilder()">Back to Menu</button>
         </div>
         <div id="builder-workspace">
             <div id="builder-grid"></div>
         </div>
+    </div>
+
+    <!-- Enhanced Item Creator Modal -->
+    <div id="item-creator-ui">
+        <h2 style="color: #ffcc00; text-shadow: 2px 2px 0 #000; font-size: 32px;">ITEM CREATOR</h2>
+        <div class="creator-panel">
+            <div class="creator-controls">
+                <div style="display: flex; margin-bottom: 10px;">
+                    <button class="slot-btn active" id="slot-0" onclick="selectCreatorSlot(0)">Slot 1</button>
+                    <button class="slot-btn" id="slot-1" onclick="selectCreatorSlot(1)">Slot 2</button>
+                    <button class="slot-btn" id="slot-2" onclick="selectCreatorSlot(2)">Slot 3</button>
+                    <button class="slot-btn" id="slot-3" onclick="selectCreatorSlot(3)">Slot 4</button>
+                </div>
+                
+                <div class="creator-row">
+                    <label>Item Name:</label>
+                    <input type="text" id="ic-name" maxlength="12" style="width: 140px; padding: 5px; background: #111; color: white; border: 1px solid #555;">
+                </div>
+
+                <div class="creator-row">
+                    <label>Shape:</label>
+                    <select id="ic-shape" style="padding: 5px; background: #111; color: white; border: 1px solid #555; width: 140px;" onchange="updateCreatorPreview()">
+                        <option value="box">Box (Cube)</option>
+                        <option value="cylinder">Cylinder</option>
+                        <option value="sphere">Sphere</option>
+                        <option value="cone">Cone</option>
+                    </select>
+                </div>
+                
+                <div class="creator-row">
+                    <label>Color:</label>
+                    <input type="color" id="ic-color" value="#ff00ff" onchange="updateCreatorPreview()">
+                </div>
+
+                <div style="background: #1a1a1a; padding: 10px; border-radius: 5px; border: 1px solid #333; margin-top: 5px;">
+                    <label style="font-size: 12px; color: #ccc;">Width (X): <span id="ic-sx-val" style="color: #fff; font-weight: bold;">1.0</span></label>
+                    <input type="range" id="ic-sx" min="0.2" max="4.0" step="0.2" value="1.0" style="width: 100%; margin-bottom:8px;" oninput="updateCreatorPreview()">
+                    
+                    <label style="font-size: 12px; color: #ccc;">Height (Y): <span id="ic-sy-val" style="color: #fff; font-weight: bold;">1.0</span></label>
+                    <input type="range" id="ic-sy" min="0.2" max="4.0" step="0.2" value="1.0" style="width: 100%; margin-bottom:8px;" oninput="updateCreatorPreview()">
+                    
+                    <label style="font-size: 12px; color: #ccc;">Depth (Z): <span id="ic-sz-val" style="color: #fff; font-weight: bold;">1.0</span></label>
+                    <input type="range" id="ic-sz" min="0.2" max="4.0" step="0.2" value="1.0" style="width: 100%;" oninput="updateCreatorPreview()">
+                </div>
+
+                <hr style="border-color:#444; width: 100%;">
+                
+                <div class="creator-row">
+                    <label>Behavior:</label>
+                    <select id="ic-behavior" style="padding: 5px; background: #111; color: white; border: 1px solid #555; width: 140px;">
+                        <option value="obstacle_custom">Solid Obstacle (Crash)</option>
+                        <option value="ramp">Jump Ramp</option>
+                        <option value="turbo">Turbo Pad</option>
+                        <option value="pothole">Slow Down Trap</option>
+                        <option value="coin">Score Coin (+5)</option>
+                        <option value="heal_small">Health Pickup</option>
+                    </select>
+                </div>
+                
+                <div class="creator-row">
+                    <label>Animation:</label>
+                    <select id="ic-anim" style="padding: 5px; background: #111; color: white; border: 1px solid #555; width: 140px;" onchange="updateCreatorPreview()">
+                        <option value="none">None (Static)</option>
+                        <option value="spin">Spinning</option>
+                        <option value="float">Floating</option>
+                        <option value="spin_float">Spin & Float</option>
+                    </select>
+                </div>
+
+                <div class="creator-row">
+                    <label>Base Effect/Dmg:</label>
+                    <input type="number" id="ic-dmg" min="0" max="100" value="10" style="width: 60px; padding: 5px; background: #111; color: white; border: 1px solid #555;">
+                </div>
+
+                <div class="creator-row" style="margin-top: 10px;">
+                    <label style="color: #ff4444; font-size: 14px; cursor: pointer;"><input type="checkbox" id="ic-instant"> Instant Crash Flag</label>
+                    <button class="btn" style="background:#555; font-size: 14px; padding: 5px 10px;" onclick="clearCreatorSlot()">Clear Slot</button>
+                </div>
+            </div>
+            
+            <!-- Live 3D Preview Canvas -->
+            <div class="creator-preview-container">
+                <h3 style="margin: 0 0 10px 0; color:#00ffff; text-shadow: 1px 1px 0 #000;">Live 3D Preview</h3>
+                <canvas id="previewCanvas" width="280" height="280" style="border: 2px solid #555; border-radius: 5px; background: #87CEEB;"></canvas>
+            </div>
+        </div>
+        <button class="btn" style="margin-top: 20px; background: #3a873a; padding: 15px 30px;" onclick="saveAndCloseItemCreator()">Save & Return</button>
     </div>
 
     <!-- Arcade Mode -->
@@ -435,7 +609,7 @@
         let ACCELERATION = 0.006; 
         const BRAKING = 0.01;
         const FRICTION = 0.002;
-        let TURN_SPEED = 0.018; // Lowered base sensitivity (was 0.03)
+        let TURN_SPEED = 0.018; 
 
         let verticalVelocity = 0;
         const GRAVITY = 0.0065;
@@ -578,6 +752,12 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
+        function playCoinSound() {
+            if(!audioCtx) return;
+            playTone(987.77, 'square', 0.1, 0.05);
+            setTimeout(() => playTone(1318.51, 'square', 0.2, 0.05), 100);
+        }
+
         function playPowerupSound() {
             if(!audioCtx) return;
             setTimeout(() => playTone(523.25, 'square', 0.1, 0.1), 0);
@@ -653,9 +833,11 @@
             ctx.fillStyle = '#ffcc00'; ctx.fillRect((w / 2) - 2, 0, 4, h / 2); 
         });
 
-        let endlessGround = null, endlessRoad = null; // Fix for TDZ error
+        let endlessGround = null, endlessRoad = null;
         let grassTexture;
         function updateGrassTexture(env) {
+            if (!env) return; // Prevent crashes if environment data is missing
+            
             grassTexture = createPixelTexture(32, 32, (ctx, w, h) => {
                 ctx.fillStyle = env.groundBase; ctx.fillRect(0, 0, w, h);
                 for(let i=0; i<30; i++) {
@@ -675,7 +857,7 @@
             }
         }
         
-        // Initialize default map
+        // Initialize default map safely
         updateGrassTexture(MAP_ENVIRONMENTS[0]);
 
         // --- Shared World Items ---
@@ -992,6 +1174,38 @@
             return shop;
         }
 
+        function createTurboPad() {
+            const pad = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 8), new THREE.MeshBasicMaterial({ color: 0x00aaff }));
+            base.position.y = 0.05; 
+            
+            const chevMat = new THREE.MeshBasicMaterial({ color: 0xffea00 });
+            const c1 = new THREE.Mesh(new THREE.BoxGeometry(1, 0.15, 4), chevMat);
+            c1.position.set(-1.5, 0.1, 0);
+            c1.rotation.y = -Math.PI / 4;
+            const c2 = new THREE.Mesh(new THREE.BoxGeometry(1, 0.15, 4), chevMat);
+            c2.position.set(1.5, 0.1, 0);
+            c2.rotation.y = Math.PI / 4;
+            
+            pad.add(base); pad.add(c1); pad.add(c2);
+            pad.userData = { speed: 0, type: 'turbo' };
+            return pad;
+        }
+
+        function createCoin() {
+            const coin = new THREE.Group();
+            const mesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.2, 1.2, 0.3, 16),
+                new THREE.MeshLambertMaterial({ color: 0xffd700, emissive: 0x444400 })
+            );
+            mesh.rotation.x = Math.PI / 2;
+            mesh.position.y = 1.5;
+            mesh.castShadow = true;
+            coin.add(mesh);
+            coin.userData = { speed: 0, type: 'coin', anim: 'spin' }; // Coins automatically spin via the new system
+            return coin;
+        }
+
         // --- Endless Mode Initialization ---
         let endlessProps = [];
         let endlessObstacles = [];
@@ -1102,37 +1316,237 @@
 
         // --- Custom Map Builder Logic ---
         
-        let mapData = Array(GRID_ROWS).fill().map(() => Array(GRID_COLS).fill('grass'));
+        let mapData = Array(GRID_ROWS).fill().map(() => Array(GRID_COLS).fill().map(() => [{id: 'grass'}]));
         
         const centerCol = Math.floor(GRID_COLS / 2);
         for(let r=0; r<GRID_ROWS; r++) {
-            mapData[r][centerCol - 1] = 'road';
-            mapData[r][centerCol] = 'road';
-            mapData[r][centerCol + 1] = 'road';
+            mapData[r][centerCol - 1] = [{id: 'road'}];
+            mapData[r][centerCol] = [{id: 'road'}];
+            mapData[r][centerCol + 1] = [{id: 'road'}];
         }
 
         let customObstacles = [];
         let currentTool = 'road';
+        let currentObjRotation = 0;
+        let currentObjDamage = 10;
+        let currentObjInstantCrash = false;
+        let customGrassLethal = false;
+        let selectedCell = null;
 
         const gridDOM = document.getElementById('builder-grid');
         gridDOM.style.gridTemplateColumns = `repeat(${GRID_COLS}, 12px)`;
         gridDOM.style.gridTemplateRows = `repeat(${GRID_ROWS}, 12px)`;
+
+        // Custom Item Creator State
+        let customItemsData = [null, null, null, null];
+        let currentCreatorSlot = 0;
+        
+        // Item Creator 3D Preview State
+        let previewRenderer, previewScene, previewCamera, previewMesh;
+
+        function initCustomItems() {
+            const saved = localStorage.getItem('pixelPanicCustomItemsData');
+            if (saved) {
+                try { customItemsData = JSON.parse(saved); } catch(e) {}
+            }
+            updateCustomToolButtons();
+            
+            // Initialize 3D Preview Canvas for the Item Creator
+            const pCanvas = document.getElementById('previewCanvas');
+            previewRenderer = new THREE.WebGLRenderer({ canvas: pCanvas, alpha: true, antialias: true });
+            previewScene = new THREE.Scene();
+            
+            previewCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            previewCamera.position.set(0, 3, 6);
+            previewCamera.lookAt(0, 0, 0);
+
+            const pLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            pLight.position.set(5, 10, 7);
+            previewScene.add(pLight);
+            previewScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            
+            requestAnimationFrame(animateCreatorPreview);
+        }
+        
+        function animateCreatorPreview() {
+            requestAnimationFrame(animateCreatorPreview);
+            // Only render preview when the menu is actually visible to save processing power
+            if (document.getElementById('item-creator-ui').style.display === 'flex') {
+                if (previewMesh) {
+                    const anim = document.getElementById('ic-anim').value;
+                    
+                    // Show live animation preview of spin/float
+                    if (anim.includes('spin')) previewMesh.rotation.y += 0.02;
+                    else previewMesh.rotation.y = Math.PI / 4; // Reset to default nice viewing angle
+                    
+                    if (anim.includes('float')) previewMesh.position.y = Math.sin(Date.now() * 0.003) * 0.5;
+                    else previewMesh.position.y = 0;
+                }
+                previewRenderer.render(previewScene, previewCamera);
+            }
+        }
+
+        function updateCustomToolButtons() {
+            for(let i=0; i<4; i++) {
+                const btn = document.getElementById('btn-custom' + i);
+                const lbl = document.getElementById('lbl-custom' + i);
+                if (customItemsData[i]) {
+                    btn.style.display = 'flex';
+                    lbl.innerText = customItemsData[i].name || ('Custom ' + (i+1));
+                    
+                    // Create dynamic stylesheet for the grid cell previews
+                    let styleId = 'style-custom' + i;
+                    let styleEl = document.getElementById(styleId);
+                    if (!styleEl) {
+                        styleEl = document.createElement('style');
+                        styleEl.id = styleId;
+                        document.head.appendChild(styleEl);
+                    }
+                    let shapeRadius = customItemsData[i].shape === 'sphere' ? '50%' : (customItemsData[i].shape === 'cylinder' ? '20%' : '0');
+                    styleEl.innerHTML = `.cell-custom${i}::after { content: ''; position: absolute; top:1px; left:1px; right:1px; bottom:1px; background: ${customItemsData[i].color}; border: 1px solid #000; border-radius: ${shapeRadius}; }`;
+                } else {
+                    btn.style.display = 'none';
+                    if (currentTool === 'custom' + i) {
+                        currentTool = 'road';
+                        document.querySelector('.tool-btn[data-tool="road"]').classList.add('active');
+                    }
+                }
+            }
+        }
+
+        function openItemCreator() {
+            document.getElementById('builder-ui').style.display = 'none';
+            document.getElementById('item-creator-ui').style.display = 'flex';
+            selectCreatorSlot(0);
+        }
+
+        function selectCreatorSlot(slot) {
+            currentCreatorSlot = slot;
+            document.querySelectorAll('.slot-btn').forEach((b, i) => {
+                b.classList.toggle('active', i === slot);
+            });
+            
+            let item = customItemsData[slot];
+            if (!item) {
+                // Defaults
+                item = { name: 'Item ' + (slot+1), shape: 'box', color: '#ff00ff', sx: 1.0, sy: 1.0, sz: 1.0, behavior: 'obstacle_custom', anim: 'none', dmg: 10, instant: false };
+            }
+            
+            document.getElementById('ic-name').value = item.name;
+            document.getElementById('ic-shape').value = item.shape;
+            document.getElementById('ic-color').value = item.color;
+            document.getElementById('ic-sx').value = item.sx;
+            document.getElementById('ic-sy').value = item.sy;
+            document.getElementById('ic-sz').value = item.sz;
+            document.getElementById('ic-behavior').value = item.behavior;
+            document.getElementById('ic-anim').value = item.anim || 'none';
+            document.getElementById('ic-dmg').value = item.dmg;
+            document.getElementById('ic-instant').checked = item.instant;
+            updateCreatorPreview();
+        }
+
+        function updateCreatorPreview() {
+            // Update labels
+            let sx = parseFloat(document.getElementById('ic-sx').value);
+            let sy = parseFloat(document.getElementById('ic-sy').value);
+            let sz = parseFloat(document.getElementById('ic-sz').value);
+            
+            document.getElementById('ic-sx-val').innerText = sx.toFixed(1);
+            document.getElementById('ic-sy-val').innerText = sy.toFixed(1);
+            document.getElementById('ic-sz-val').innerText = sz.toFixed(1);
+            
+            // Build the live 3D preview mesh
+            if(previewMesh) previewScene.remove(previewMesh);
+            
+            let shape = document.getElementById('ic-shape').value;
+            let color = document.getElementById('ic-color').value;
+            
+            let geo;
+            if (shape === 'box') geo = new THREE.BoxGeometry(sx, sy, sz);
+            else if (shape === 'cylinder') geo = new THREE.CylinderGeometry(sx/2, sx/2, sy, 16);
+            else if (shape === 'sphere') geo = new THREE.SphereGeometry(sx/2, 16, 16);
+            else if (shape === 'cone') geo = new THREE.ConeGeometry(sx/2, sy, 16);
+            
+            let mat = new THREE.MeshLambertMaterial({ color: parseInt(color.replace('#', '0x')) });
+            previewMesh = new THREE.Mesh(geo, mat);
+            previewScene.add(previewMesh);
+        }
+
+        function clearCreatorSlot() {
+            customItemsData[currentCreatorSlot] = null;
+            selectCreatorSlot(currentCreatorSlot); // reset to defaults visually
+        }
+
+        function saveAndCloseItemCreator() {
+            // Save current form to slot if customized
+            let nameVal = document.getElementById('ic-name').value.trim();
+            if (nameVal === "") nameVal = 'Custom ' + (currentCreatorSlot+1);
+            
+            customItemsData[currentCreatorSlot] = {
+                name: nameVal,
+                shape: document.getElementById('ic-shape').value,
+                color: document.getElementById('ic-color').value,
+                sx: parseFloat(document.getElementById('ic-sx').value),
+                sy: parseFloat(document.getElementById('ic-sy').value),
+                sz: parseFloat(document.getElementById('ic-sz').value),
+                behavior: document.getElementById('ic-behavior').value,
+                anim: document.getElementById('ic-anim').value,
+                dmg: parseInt(document.getElementById('ic-dmg').value),
+                instant: document.getElementById('ic-instant').checked
+            };
+            
+            localStorage.setItem('pixelPanicCustomItemsData', JSON.stringify(customItemsData));
+            updateCustomToolButtons();
+            
+            document.getElementById('item-creator-ui').style.display = 'none';
+            document.getElementById('builder-ui').style.display = 'flex';
+            
+            if (audioCtx) playBoostSound();
+        }
 
         function renderBuilderGrid() {
             gridDOM.innerHTML = '';
             for (let r = GRID_ROWS - 1; r >= 0; r--) {
                 for (let c = 0; c < GRID_COLS; c++) {
                     const cell = document.createElement('div');
-                    cell.className = `grid-cell cell-${mapData[r][c]}`;
+                    const stack = mapData[r][c];
+                    cell.className = `grid-cell cell-${stack[0].id}`;
+                    
+                    // Show the top item visually on the grid if it's stacked
+                    if (stack.length > 1) {
+                        const topItem = stack[stack.length - 1];
+                        cell.classList.add(`cell-${topItem.id}`);
+                        
+                        // Add the directional arrow based on the rotation property
+                        if (topItem.rot !== undefined) {
+                            const arrow = document.createElement('div');
+                            arrow.className = 'dir-arrow';
+                            // Three.js turns counter-clockwise for positive Y rotation, CSS rotate rotates clockwise. 
+                            // So we negate it (-topItem.rot) to visually match!
+                            arrow.style.transform = `translate(-50%, -50%) rotate(${-topItem.rot}deg)`;
+                            cell.appendChild(arrow);
+                        }
+                    }
+                    
                     cell.dataset.row = r; cell.dataset.col = c;
                     
                     if(r === GRID_ROWS - 1) cell.classList.add('finish-line-row');
+                    
+                    // Highlight selected cell
+                    if (selectedCell && r === selectedCell.r && c === selectedCell.c) {
+                        cell.classList.add('cell-selected');
+                    }
                     
                     gridDOM.appendChild(cell);
                 }
             }
         }
-        renderBuilderGrid();
+        
+        // --- Delay render until after definitions to be completely safe ---
+        setTimeout(() => {
+            initCustomItems();
+            renderBuilderGrid();
+        }, 0);
 
         // Map Builder Action Functions
         let brushSize = 1;
@@ -1143,17 +1557,44 @@
             btnElement.classList.add('active');
         }
 
+        // Handle Live Property Updates from Sliders
+        function updateToolProperty(prop, value) {
+            if (prop === 'rot') {
+                currentObjRotation = parseInt(value);
+                document.getElementById('rot-val').innerText = currentObjRotation;
+            } else if (prop === 'dmg') {
+                currentObjDamage = parseInt(value);
+                document.getElementById('dmg-val').innerText = currentObjDamage + ' HP';
+            } else if (prop === 'instant') {
+                currentObjInstantCrash = value;
+                document.getElementById('prop-dmg').disabled = value;
+                document.getElementById('dmg-val').style.opacity = value ? 0.5 : 1;
+            }
+
+            // If editing a selected cell on the grid, apply the change instantly
+            if (currentTool === 'edit' && selectedCell) {
+                const stack = mapData[selectedCell.r][selectedCell.c];
+                const topItem = stack[stack.length - 1];
+                if (topItem.id !== 'grass' && topItem.id !== 'road') {
+                    if (prop === 'rot') topItem.rot = currentObjRotation;
+                    if (prop === 'dmg') topItem.dmg = currentObjDamage;
+                    if (prop === 'instant') topItem.instant = currentObjInstantCrash;
+                    renderBuilderGrid(); 
+                }
+            }
+        }
+
         function clearMap() {
             for(let r=0; r<GRID_ROWS; r++) {
                 for(let c=0; c<GRID_COLS; c++) {
-                    mapData[r][c] = 'grass';
+                    mapData[r][c] = [{id: 'grass'}];
                 }
             }
             const centerCol = Math.floor(GRID_COLS / 2);
             for(let r=0; r<GRID_ROWS; r++) {
-                mapData[r][centerCol - 1] = 'road';
-                mapData[r][centerCol] = 'road';
-                mapData[r][centerCol + 1] = 'road';
+                mapData[r][centerCol - 1] = [{id: 'road'}];
+                mapData[r][centerCol] = [{id: 'road'}];
+                mapData[r][centerCol + 1] = [{id: 'road'}];
             }
             renderBuilderGrid();
             if (audioCtx) playHealSound();
@@ -1162,7 +1603,19 @@
         function fillMap() {
             for(let r=0; r<GRID_ROWS; r++) {
                 for(let c=0; c<GRID_COLS; c++) {
-                    mapData[r][c] = currentTool;
+                    let stack = mapData[r][c];
+                    let newItem = {
+                        id: currentTool,
+                        rot: currentObjRotation,
+                        dmg: currentObjDamage,
+                        instant: currentObjInstantCrash
+                    };
+                    
+                    if (currentTool === 'grass' || currentTool === 'road') {
+                        mapData[r][c] = [newItem];
+                    } else {
+                        stack.push(newItem);
+                    }
                 }
             }
             renderBuilderGrid();
@@ -1171,6 +1624,7 @@
 
         function saveMap() {
             localStorage.setItem('pixelPanicCustomMap', JSON.stringify(mapData));
+            localStorage.setItem('pixelPanicCustomMapGrassLethal', customGrassLethal);
             if (audioCtx) playBoostSound();
             const btn = document.getElementById('btn-save-map');
             btn.innerText = "SAVED!";
@@ -1180,7 +1634,32 @@
         function loadMap() {
             const saved = localStorage.getItem('pixelPanicCustomMap');
             if(saved) {
-                mapData = JSON.parse(saved);
+                let parsed = JSON.parse(saved);
+                // Backwards compatibility check: convert old single strings to stack arrays of objects
+                for(let r=0; r<GRID_ROWS; r++) {
+                    for(let c=0; c<GRID_COLS; c++) {
+                        if (!Array.isArray(parsed[r][c])) {
+                            let old = parsed[r][c];
+                            if (old === 'grass' || old === 'road') parsed[r][c] = [{id: old}];
+                            else parsed[r][c] = [{id: 'road'}, {id: old, rot: 0, dmg: 10, instant: (old==='tree'||old==='rock'||old==='crash')}];
+                        } else {
+                            parsed[r][c] = parsed[r][c].map(item => {
+                                if (typeof item === 'string') return { id: item, rot: 0, dmg: 10, instant: (item==='tree'||item==='rock'||item==='crash') };
+                                return item;
+                            });
+                        }
+                    }
+                }
+                mapData = parsed;
+
+                // Load Lethal Grass Setting
+                const savedLethal = localStorage.getItem('pixelPanicCustomMapGrassLethal');
+                if (savedLethal !== null) {
+                    customGrassLethal = (savedLethal === 'true');
+                    const lg = document.getElementById('setting-lethal-grass');
+                    if(lg) lg.checked = customGrassLethal;
+                }
+
                 renderBuilderGrid();
                 if (audioCtx) playHealSound();
             } else {
@@ -1191,26 +1670,62 @@
             }
         }
 
-        document.querySelectorAll('.tool-btn:not(.brush-btn):not(#btn-save-map):not(#btn-load-map):not([onclick="fillMap()"]):not([onclick="clearMap()"])').forEach(btn => {
+        document.querySelectorAll('.tool-btn:not(.brush-btn):not(#btn-save-map):not(#btn-load-map):not([onclick="fillMap()"]):not([onclick="clearMap()"]):not([onclick="openItemCreator()"])').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tool-btn').forEach(b => {
                     if(b.dataset.tool) b.classList.remove('active');
                 });
                 btn.classList.add('active');
                 currentTool = btn.dataset.tool;
+                
+                // Clear the selection highlight if we switch away from the edit tool
+                if (currentTool !== 'edit' && selectedCell) {
+                    selectedCell = null;
+                    renderBuilderGrid();
+                }
             });
         });
 
         let isDrawing = false;
-        gridDOM.addEventListener('mousedown', (e) => { isDrawing = true; paintCell(e.target); });
+        // Pass "true" to forceStack on mousedown so we can click repeatedly to build towers, and pass true for isClick
+        gridDOM.addEventListener('mousedown', (e) => { isDrawing = true; paintCell(e.target, true, true); });
         window.addEventListener('mouseup', () => isDrawing = false);
-        gridDOM.addEventListener('mouseover', (e) => { if (isDrawing) paintCell(e.target); });
+        gridDOM.addEventListener('mouseover', (e) => { if (isDrawing) paintCell(e.target, false, false); });
 
-        function paintCell(target) {
+        function paintCell(target, forceStack = false, isClick = false) {
             if (!target.classList.contains('grid-cell')) return;
             const centerR = parseInt(target.dataset.row);
             const centerC = parseInt(target.dataset.col);
             
+            // Edit Tool Logic
+            if (currentTool === 'edit') {
+                if (!isClick) return; // Only select items on explicit click, not drag
+                selectedCell = {r: centerR, c: centerC};
+                const stack = mapData[centerR][centerC];
+                const topItem = stack[stack.length - 1];
+
+                // Load object properties silently into UI
+                currentObjRotation = topItem.rot !== undefined ? topItem.rot : 0;
+                document.getElementById('prop-rot').value = currentObjRotation;
+                document.getElementById('rot-val').innerText = currentObjRotation;
+
+                currentObjInstantCrash = topItem.instant !== undefined ? topItem.instant : (topItem.id==='tree'||topItem.id==='rock'||topItem.id==='crash');
+                const pInstant = document.getElementById('prop-instant');
+                if(pInstant) pInstant.checked = currentObjInstantCrash;
+                
+                const pDmg = document.getElementById('prop-dmg');
+                const dVal = document.getElementById('dmg-val');
+                if(pDmg) pDmg.disabled = currentObjInstantCrash;
+                if(dVal) dVal.style.opacity = currentObjInstantCrash ? 0.5 : 1;
+
+                currentObjDamage = topItem.dmg !== undefined ? topItem.dmg : 10;
+                if(pDmg) pDmg.value = currentObjDamage;
+                if(dVal) dVal.innerText = currentObjDamage + ' HP';
+
+                renderBuilderGrid(); // Re-render to show the yellow selection highlight
+                return;
+            }
+
             const offset = Math.floor(brushSize / 2);
             
             // Loop for brush size
@@ -1220,13 +1735,51 @@
                     const drawC = centerC + j;
                     
                     if(drawR >= 0 && drawR < GRID_ROWS && drawC >= 0 && drawC < GRID_COLS) {
-                        mapData[drawR][drawC] = currentTool;
+                        let cellStack = mapData[drawR][drawC];
+                        
+                        let newItem = {
+                            id: currentTool,
+                            rot: currentObjRotation,
+                            dmg: currentObjDamage,
+                            instant: currentObjInstantCrash
+                        };
+
+                        if (currentTool === 'road' || currentTool === 'grass') {
+                            cellStack = [newItem]; // Overwrite the cell entirely
+                        } else {
+                            if (forceStack) {
+                                cellStack.push(newItem); // Stack it up!
+                            } else if (cellStack[cellStack.length - 1].id !== currentTool) {
+                                // If dragging, don't spam 100 items on one block. Only add it if it's new.
+                                cellStack.push(newItem);
+                            }
+                        }
+                        mapData[drawR][drawC] = cellStack;
                         
                         // Update visual DOM node immediately
                         const index = (GRID_ROWS - 1 - drawR) * GRID_COLS + drawC;
                         const cell = gridDOM.children[index];
                         if(cell) {
-                            cell.className = `grid-cell cell-${currentTool}`;
+                            cell.className = `grid-cell cell-${cellStack[0].id}`;
+                            cell.innerHTML = ''; // Clear out the old arrow
+                            
+                            if (cellStack.length > 1) {
+                                const topItem = cellStack[cellStack.length - 1];
+                                cell.classList.add(`cell-${topItem.id}`);
+                                
+                                // Re-add the arrow for the updated top item
+                                if (topItem.rot !== undefined) {
+                                    const arrow = document.createElement('div');
+                                    arrow.className = 'dir-arrow';
+                                    arrow.style.transform = `translate(-50%, -50%) rotate(${-topItem.rot}deg)`;
+                                    cell.appendChild(arrow);
+                                }
+                            }
+                            
+                            if (selectedCell && drawR === selectedCell.r && drawC === selectedCell.c) {
+                                cell.classList.add('cell-selected');
+                            }
+                            
                             if(drawR === GRID_ROWS - 1) cell.classList.add('finish-line-row');
                         }
                     }
@@ -1240,9 +1793,8 @@
             }
             customObstacles = [];
 
-            // Snap the custom map grass background strictly to the grid edges (removed the +200 invisible overflow)
-            const bgGeo = new THREE.PlaneGeometry(GRID_COLS * CELL_SIZE, GRID_ROWS * CELL_SIZE);
-            grassTexture.repeat.set(GRID_COLS, GRID_ROWS);
+            const bgGeo = new THREE.PlaneGeometry(GRID_COLS * CELL_SIZE + 200, GRID_ROWS * CELL_SIZE + 200);
+            grassTexture.repeat.set(50, 50);
             const bgMesh = new THREE.Mesh(bgGeo, new THREE.MeshLambertMaterial({ map: grassTexture }));
             bgMesh.rotation.x = -Math.PI / 2;
             bgMesh.position.y = -0.01; 
@@ -1255,12 +1807,13 @@
 
             for (let r = 0; r < GRID_ROWS; r++) {
                 for (let c = 0; c < GRID_COLS; c++) {
-                    const type = mapData[r][c];
+                    const stack = mapData[r][c];
+                    const baseType = stack[0].id;
                     
                     const posX = (c - Math.floor(GRID_COLS / 2)) * CELL_SIZE;
                     const posZ = -r * CELL_SIZE;
 
-                    if (['road', 'car', 'rager', 'trash', 'pinktrash', 'crash', 'ramp', 'gas', 'pothole', 'autoshop'].includes(type)) {
+                    if (baseType === 'road') {
                         const tile = new THREE.Mesh(roadGeo, roadMat);
                         tile.rotation.x = -Math.PI / 2;
                         tile.position.set(posX, 0.01, posZ);
@@ -1268,22 +1821,82 @@
                         customGroup.add(tile);
                     }
 
-                    let obj = null;
-                    if (type === 'tree') { obj = createTree(); customObstacles.push(obj); }
-                    else if (type === 'rock') { obj = createRock(); customObstacles.push(obj); }
-                    else if (type === 'trash') { obj = createTrash(); customObstacles.push(obj); }
-                    else if (type === 'pinktrash') { obj = createPinkTrash(); customObstacles.push(obj); }
-                    else if (type === 'car') { obj = createEnemyCar(); customObstacles.push(obj); }
-                    else if (type === 'rager') { obj = createRoadRager(); customObstacles.push(obj); }
-                    else if (type === 'crash') { obj = createCarCrash(); customObstacles.push(obj); }
-                    else if (type === 'ramp') { obj = createCarRamp(); customObstacles.push(obj); }
-                    else if (type === 'gas') { obj = createGasCan(); customObstacles.push(obj); }
-                    else if (type === 'pothole') { obj = createPothole(); customObstacles.push(obj); }
-                    else if (type === 'autoshop') { obj = createAutoShop(); customObstacles.push(obj); }
+                    let currentY = 0; // The ground
 
-                    if (obj) {
-                        obj.position.set(posX, 0, posZ);
-                        customGroup.add(obj);
+                    // Iterate upwards through our stack to place obstacles on top of each other
+                    for (let i = 1; i < stack.length; i++) {
+                        const itemData = stack[i];
+                        const type = itemData.id;
+                        let obj = null;
+                        let height = 0;
+
+                        if (type === 'tree') { obj = createTree(); height = 2.0; }
+                        else if (type === 'rock') { obj = createRock(); height = 1.5; }
+                        else if (type === 'trash') { obj = createTrash(); height = 1.0; }
+                        else if (type === 'pinktrash') { obj = createPinkTrash(); height = 1.0; }
+                        else if (type === 'car') { obj = createEnemyCar(); height = 1.2; }
+                        else if (type === 'rager') { obj = createRoadRager(); height = 1.2; }
+                        else if (type === 'crash') { obj = createCarCrash(); height = 1.2; }
+                        else if (type === 'ramp') { obj = createCarRamp(); height = 1.6; }
+                        else if (type === 'gas') { obj = createGasCan(); height = 1.0; }
+                        else if (type === 'pothole') { obj = createPothole(); height = 0.05; }
+                        else if (type === 'autoshop') { obj = createAutoShop(); height = 4.0; }
+                        else if (type === 'turbo') { obj = createTurboPad(); height = 0.2; }
+                        else if (type === 'coin') { obj = createCoin(); height = 1.5; }
+                        else if (type.startsWith('custom')) {
+                            const slotIdx = parseInt(type.replace('custom', ''));
+                            const itemDef = customItemsData[slotIdx];
+                            if (itemDef) {
+                                let geo;
+                                if (itemDef.shape === 'box') geo = new THREE.BoxGeometry(itemDef.sx, itemDef.sy, itemDef.sz);
+                                else if (itemDef.shape === 'cylinder') geo = new THREE.CylinderGeometry(itemDef.sx/2, itemDef.sx/2, itemDef.sy, 16);
+                                else if (itemDef.shape === 'sphere') geo = new THREE.SphereGeometry(itemDef.sx/2, 16, 16);
+                                else if (itemDef.shape === 'cone') geo = new THREE.ConeGeometry(itemDef.sx/2, itemDef.sy, 16);
+                                
+                                let mat = new THREE.MeshLambertMaterial({ color: parseInt(itemDef.color.replace('#', '0x')) });
+                                obj = new THREE.Mesh(geo, mat);
+                                obj.castShadow = true;
+                                height = itemDef.sy;
+
+                                // Link Custom Properties to normal game loops
+                                obj.userData = { 
+                                    speed: 0, 
+                                    type: itemDef.behavior, 
+                                    customDamage: itemDef.dmg, 
+                                    instantCrash: itemDef.instant,
+                                    anim: itemDef.anim || 'none',
+                                    baseY: currentY + (height / 2) // For floating math
+                                };
+                                
+                                if (obj.userData.anim.includes('float')) {
+                                    currentY += 0.5; // Offset start height slightly
+                                }
+                            }
+                        }
+
+                        if (obj) {
+                            if (type.startsWith('custom')) {
+                                obj.position.set(posX, currentY + (height / 2), posZ);
+                            } else {
+                                obj.position.set(posX, currentY, posZ);
+                            }
+                            
+                            // Apply Custom Properties
+                            if (itemData.rot !== undefined) {
+                                obj.rotation.y += itemData.rot * (Math.PI / 180);
+                            }
+                            
+                            // Save properties so collision logic handles them
+                            if (!type.startsWith('custom')) {
+                                obj.userData.customDamage = itemData.dmg !== undefined ? itemData.dmg : 10;
+                                obj.userData.instantCrash = itemData.instant !== undefined ? itemData.instant : (type === 'tree' || type === 'rock' || type === 'crash');
+                            }
+
+                            if (type === 'ramp') obj.position.y += 0.5; // Visual fix so ramp isn't totally clipping through
+                            customGroup.add(obj);
+                            customObstacles.push(obj);
+                            currentY += height; // Add height to the stack for the next item!
+                        }
                     }
                 }
             }
@@ -1498,6 +2111,12 @@
                 nextNoteTime = audioCtx.currentTime + 0.1;
                 noteIndex = 0;
             }
+
+            // Automatically scroll to the bottom (start line) when opening the builder
+            setTimeout(() => {
+                const workspace = document.getElementById('builder-workspace');
+                workspace.scrollTop = workspace.scrollHeight;
+            }, 10);
         }
 
         function closeBuilder() {
@@ -1822,6 +2441,17 @@
                 } else if (obs.userData.type === 'ramp') {
                     verticalVelocity = 0.40; 
                     playHealSound(); 
+                } else if (obs.userData.type === 'turbo') {
+                    boostEndTime = Date.now() + 2000;
+                    speed = maxSpeed * 1.5;
+                    playBoostSound();
+                    // Turbo pads stay visible so you can see them after you hit them
+                } else if (obs.userData.type === 'coin') {
+                    totalCoins += 5;
+                    document.getElementById('menu-coins').innerText = `Total Coins: ${totalCoins}`;
+                    document.getElementById('coins-display').innerText = `Coins: ${totalCoins}`;
+                    playCoinSound();
+                    obs.visible = false;
                 } else if (obs.userData.type === 'pothole') {
                     if (!isInvincible) {
                         slowEndTime = Date.now() + 4000;
@@ -1837,14 +2467,24 @@
                     // Hide the green cross so player knows it's collected, but keep the building!
                     const cross = obs.getObjectByName('healCross');
                     if (cross) cross.visible = false;
+                } else if (obs.userData.type === 'heal_small') {
+                    let healAmt = obs.userData.customDamage !== undefined ? obs.userData.customDamage : 20;
+                    healDamage(healAmt);
+                    playHealSound();
+                    obs.visible = false;
                 } else {
                     if (isInvincible) {
                         // Smash right through!
                         obs.visible = false;
                         playHitSound();
                     } else {
-                        if (obs.userData.type === 'crash' || obs.userData.type === 'tree' || obs.userData.type === 'rock' || obs.userData.type === 'rolling_rock') {
-                            // The car crash, trees, and rocks always crash you instantly
+                        // Apply custom damage properties if available, fallback to defaults
+                        let isInstant = obs.userData.instantCrash;
+                        if (isInstant === undefined) {
+                            isInstant = (obs.userData.type === 'crash' || obs.userData.type === 'tree' || obs.userData.type === 'rock' || obs.userData.type === 'rolling_rock');
+                        }
+
+                        if (isInstant) {
                             crashGame('obstacle');
                         } else {
                             obs.visible = false; 
@@ -1853,10 +2493,11 @@
                                 invertEndTime = Date.now() + 8000;
                                 playPowerupSound();
                             } else {
-                                // Determine amount based on object type
-                                let amount = 10; // Default for cars/ragers
-                                if (obs.userData.type === 'trash') {
-                                    amount = 7;
+                                // Determine amount based on object type or custom rules
+                                let amount = obs.userData.customDamage;
+                                if (amount === undefined) {
+                                    amount = 10; // Default for cars/ragers
+                                    if (obs.userData.type === 'trash') amount = 7;
                                 }
 
                                 if (isInverted) {
@@ -1895,9 +2536,6 @@
 
                 // 1. Collision & Rules depending on mode
                 let inPitStop = false;
-                let isOffRoad = false;
-                const isJeepWithTires = (CAR_TYPES[currentCarIndex].id === 'jeep' && toughTiresOwned);
-
                 if (gameMode === 'endless') {
                     endlessObstacles.forEach(obs => {
                         if (obs.userData.type === 'autoshop') {
@@ -1907,12 +2545,19 @@
                         }
                     });
 
-                    isOffRoad = Math.abs(car.position.x) > (currentRoadWidth / 2 - 1) && !inPitStop;
-
                     if (!isInvincible && car.position.y <= 0.1 && Math.abs(car.position.x) > (currentRoadWidth / 2)) {
                         if (!inPitStop && !isJeepWithTires) crashGame('grass');
                     }
                 } else if (gameMode === 'custom') {
+                    customObstacles.forEach(obs => {
+                        if (obs.userData.type === 'autoshop') {
+                            // Check the wide radius of the autoshop pad, just like in endless mode
+                            if (Math.abs(car.position.z - obs.position.z) < 45 && Math.abs(car.position.x - obs.position.x) < 15) {
+                                inPitStop = true;
+                            }
+                        }
+                    });
+
                     if (car.position.z < - (GRID_ROWS - 1) * CELL_SIZE) {
                         winGame();
                         return; 
@@ -1923,16 +2568,18 @@
                     
                     if (carRow < 0 || carRow >= GRID_ROWS || carCol < 0 || carCol >= GRID_COLS) {
                         isOffRoad = true;
-                        if (!isInvincible && car.position.y <= 0.1 && !isJeepWithTires) crashGame('grass');
+                        if (!isInvincible && car.position.y <= 0.1 && !isJeepWithTires && customGrassLethal) crashGame('grass');
                     } else {
-                        const cellType = mapData[carRow][carCol];
-                        if (cellType === 'grass') isOffRoad = true;
+                        const cellStack = mapData[carRow][carCol];
+                        const baseType = cellStack[0].id; // Ground logic is only concerned with the base layer
+                        
+                        if (baseType === 'grass') isOffRoad = true;
 
-                        if (!isInvincible && car.position.y <= 0.1 && (cellType === 'grass' || cellType === 'tree' || cellType === 'rock' || cellType === 'crash')) {
-                            if (cellType === 'grass' && isJeepWithTires) {
-                                // Jeep with tough tires survives grass
+                        if (!isInvincible && car.position.y <= 0.1 && baseType === 'grass') {
+                            if (isJeepWithTires || !customGrassLethal) {
+                                // Jeep survives grass, or grass is set to non-lethal
                             } else {
-                                crashGame(cellType === 'grass' ? 'grass' : 'obstacle');
+                                crashGame('grass');
                             }
                         }
                     }
@@ -1952,6 +2599,15 @@
                 }
 
                 // 2. Physics & Control
+                let isOffRoad = false;
+                if (gameMode === 'endless') {
+                    isOffRoad = Math.abs(car.position.x) > (ROAD_WIDTH / 2 - 1) && !inPitStop;
+                } else if (gameMode === 'custom') {
+                    const carCol = Math.floor((car.position.x + (CELL_SIZE / 2)) / CELL_SIZE) + Math.floor(GRID_COLS / 2);
+                    const carRow = Math.floor(-car.position.z / CELL_SIZE);
+                    isOffRoad = (carRow < 0 || carRow >= GRID_ROWS || carCol < 0 || carCol >= GRID_COLS || mapData[carRow][carCol][0].id === 'grass') && !inPitStop;
+                }
+                
                 const isSlowed = Date.now() < slowEndTime;
                 
                 // Speed calculation factoring in invincibility boost, offroad, and slow effect
@@ -1996,9 +2652,11 @@
                 car.position.z -= Math.cos(angle) * speed;
 
                 // --- INVISIBLE WALL ---
-                const MAX_OFFROAD_X = (currentRoadWidth / 2) + 20; // Limits how far off-road you can drive
-                if (car.position.x > MAX_OFFROAD_X) car.position.x = MAX_OFFROAD_X;
-                if (car.position.x < -MAX_OFFROAD_X) car.position.x = -MAX_OFFROAD_X;
+                if (gameMode === 'endless') {
+                    const MAX_OFFROAD_X = (currentRoadWidth / 2) + 20; // Limits how far off-road you can drive
+                    if (car.position.x > MAX_OFFROAD_X) car.position.x = MAX_OFFROAD_X;
+                    if (car.position.x < -MAX_OFFROAD_X) car.position.x = -MAX_OFFROAD_X;
+                }
                 // ----------------------
 
                 // 3. World Updates & Objects
@@ -2068,6 +2726,7 @@
                         if (prop.position.z < car.position.z - CHUNK_SIZE + 20) prop.position.z += CHUNK_SIZE;
 
                         // OPTIMIZATION: Only calculate collisions for scenery that is within driving range
+                        const MAX_OFFROAD_X = (currentRoadWidth / 2) + 20;
                         if (Math.abs(prop.position.x) < MAX_OFFROAD_X + 5) {
                             handleObstacleCollision(prop);
                         }
@@ -2153,6 +2812,17 @@
                     });
                 } else if (gameMode === 'custom') {
                     customObstacles.forEach(obs => {
+                        // Apply custom animations
+                        if (obs.userData.anim && obs.visible) {
+                            if (obs.userData.anim.includes('spin')) {
+                                obs.rotation.y += 0.05;
+                            }
+                            if (obs.userData.anim.includes('float')) {
+                                // Mathematical floating based on time + offset
+                                obs.position.y = obs.userData.baseY + Math.sin((Date.now() * 0.003) + obs.position.x) * 0.5;
+                            }
+                        }
+
                         if (obs.userData.type === 'car') obs.position.z -= obs.userData.speed;
                         if (obs.userData.type === 'rager') {
                             obs.position.z -= obs.userData.speed;
