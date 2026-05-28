@@ -283,6 +283,16 @@
 </head>
 <body>
 
+    <!-- Splash Screen -->
+    <div id="splash-screen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <p style="font-size: 24px; color: #fff; max-width: 600px; line-height: 1.5; text-shadow: 2px 2px 0 #000;">
+            Before you play, you must know this game gets frequent updates.<br><br>
+            <span style="color: #00ffff;">- The Arcade.</span>
+        </p>
+        <button id="splash-continue-btn" class="btn" style="margin-top: 30px; display: none;" onclick="dismissSplashScreen()">Continue</button>
+        <div style="position: absolute; bottom: 15px; left: 15px; color: #888; font-size: 16px; font-weight: bold; text-shadow: 1px 1px 0 #000;">version 1.3</div>
+    </div>
+
     <!-- HUD -->
     <div id="ui" style="display: none;">
         <div>
@@ -672,7 +682,7 @@
             isAudioInitialized = true;
         }
 
-        function playTone(freq, type, duration, vol=0.1) {
+        function playTone(freq, type, duration, vol=0.2) {
             if(!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -714,7 +724,7 @@
                     }
                     if (isBoosted) freq *= 1.5; // Pitch up for boost excitement
                     
-                    playTone(freq, waveType, noteSpeed * 0.75, 0.03); 
+                    playTone(freq, waveType, noteSpeed * 0.75, 0.06); 
                     nextNoteTime = audioCtx.currentTime + noteSpeed; 
                     noteIndex = (noteIndex + 1) % musicMelody.length;
                 }
@@ -728,7 +738,7 @@
             osc.type = 'square';
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -743,7 +753,7 @@
             osc.type = 'square';
             osc.frequency.setValueAtTime(100, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -758,7 +768,7 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -766,18 +776,12 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        function playCoinSound() {
-            if(!audioCtx) return;
-            playTone(987.77, 'square', 0.1, 0.05);
-            setTimeout(() => playTone(1318.51, 'square', 0.2, 0.05), 100);
-        }
-
         function playPowerupSound() {
             if(!audioCtx) return;
-            setTimeout(() => playTone(523.25, 'square', 0.1, 0.1), 0);
-            setTimeout(() => playTone(659.25, 'square', 0.1, 0.1), 100);
-            setTimeout(() => playTone(783.99, 'square', 0.1, 0.1), 200);
-            setTimeout(() => playTone(1046.50, 'square', 0.2, 0.1), 300);
+            setTimeout(() => playTone(523.25, 'square', 0.1, 0.2), 0);
+            setTimeout(() => playTone(659.25, 'square', 0.1, 0.2), 100);
+            setTimeout(() => playTone(783.99, 'square', 0.1, 0.2), 200);
+            setTimeout(() => playTone(1046.50, 'square', 0.2, 0.2), 300);
         }
 
         function playBoostSound() {
@@ -787,7 +791,7 @@
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(300, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 1.5);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.0);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -797,10 +801,10 @@
 
         function playWinSound() {
             if(!audioCtx) return;
-            setTimeout(() => playTone(440, 'square', 0.2, 0.1), 0);
-            setTimeout(() => playTone(554, 'square', 0.2, 0.1), 200);
-            setTimeout(() => playTone(659, 'square', 0.2, 0.1), 400);
-            setTimeout(() => playTone(880, 'square', 0.4, 0.1), 600);
+            setTimeout(() => playTone(440, 'square', 0.2, 0.2), 0);
+            setTimeout(() => playTone(554, 'square', 0.2, 0.2), 200);
+            setTimeout(() => playTone(659, 'square', 0.2, 0.2), 400);
+            setTimeout(() => playTone(880, 'square', 0.4, 0.2), 600);
         }
 
         // --- Three.js Setup ---
@@ -2169,6 +2173,7 @@
         }
 
         function showMainMenu(title = "PIXEL RACING", subtitle = "", isCrash = false) {
+            let previousMode = gameMode;
             isGameRunning = false;
             gameMode = 'menu';
             invertEndTime = 0; 
@@ -2177,7 +2182,15 @@
             cheatCodeInput = ""; // Reset cheat code sequence on menu load
             document.body.style.filter = 'none'; 
             document.getElementById('zone-alert').style.display = 'none';
-            if (audioCtx && engineGain) engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            
+            if (audioCtx && engineGain) {
+                engineGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                // Instantly sync the music loop back to the chill menu pace
+                if (previousMode !== 'menu') {
+                    nextNoteTime = audioCtx.currentTime + 0.1;
+                    noteIndex = 0;
+                }
+            }
             
             document.getElementById('ui').style.display = 'none';
             document.getElementById('menu-coins').innerText = `Total Coins: ${totalCoins}`;
@@ -2264,7 +2277,7 @@
             
             document.getElementById('speedometer').innerText = "0 MPH";
             document.getElementById('health-bar').innerText = "Health: " + health;
-            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SPACE]`;
+            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SHIFT]`;
 
             if (mode === 'endless') {
                 endlessGroup.visible = true;
@@ -2278,7 +2291,7 @@
 
             initAudio();
             if (audioCtx) {
-                engineGain.gain.setTargetAtTime(0.015, audioCtx.currentTime, 0.1); 
+                engineGain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.1); 
                 nextNoteTime = audioCtx.currentTime + 0.1;
                 noteIndex = 0;
             }
@@ -3054,7 +3067,21 @@
             }
         }
 
-        showMainMenu();
+        function showSplashScreen() {
+            document.getElementById('splash-screen').style.display = 'flex';
+            document.getElementById('overlay').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('splash-continue-btn').style.display = 'block';
+            }, 4000);
+        }
+
+        function dismissSplashScreen() {
+            document.getElementById('splash-screen').style.display = 'none';
+            initAudio(); // Initialize the audio context now that the user has clicked!
+            showMainMenu();
+        }
+
+        showSplashScreen();
         animate();
     </script>
 </body>
