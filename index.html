@@ -280,6 +280,7 @@
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/VRButton.js"></script>
 </head>
 <body>
 
@@ -776,6 +777,12 @@
             osc.stop(audioCtx.currentTime + 0.1);
         }
 
+        function playCoinSound() {
+            if(!audioCtx) return;
+            playTone(987.77, 'square', 0.1, 0.05);
+            setTimeout(() => playTone(1318.51, 'square', 0.2, 0.05), 100);
+        }
+
         function playPowerupSound() {
             if(!audioCtx) return;
             setTimeout(() => playTone(523.25, 'square', 0.1, 0.2), 0);
@@ -801,10 +808,10 @@
 
         function playWinSound() {
             if(!audioCtx) return;
-            setTimeout(() => playTone(440, 'square', 0.2, 0.2), 0);
-            setTimeout(() => playTone(554, 'square', 0.2, 0.2), 200);
-            setTimeout(() => playTone(659, 'square', 0.2, 0.2), 400);
-            setTimeout(() => playTone(880, 'square', 0.4, 0.2), 600);
+            setTimeout(() => playTone(440, 'square', 0.2, 0.1), 0);
+            setTimeout(() => playTone(554, 'square', 0.2, 0.1), 200);
+            setTimeout(() => playTone(659, 'square', 0.2, 0.1), 400);
+            setTimeout(() => playTone(880, 'square', 0.4, 0.1), 600);
         }
 
         // --- Three.js Setup ---
@@ -812,6 +819,10 @@
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.BasicShadowMap;
+        renderer.xr.enabled = true; // Enable WebXR for Virtual Reality
+        if (typeof VRButton !== 'undefined') {
+            document.body.appendChild(VRButton.createButton(renderer)); // Add the VR Button to the page
+        }
         
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB); 
@@ -2277,7 +2288,7 @@
             
             document.getElementById('speedometer').innerText = "0 MPH";
             document.getElementById('health-bar').innerText = "Health: " + health;
-            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SHIFT]`;
+            document.getElementById('nitro-hud').innerText = `Nitro: ${nitroCount} [SPACE]`;
 
             if (mode === 'endless') {
                 endlessGroup.visible = true;
@@ -2595,8 +2606,6 @@
         const speedUI = document.getElementById('speedometer');
 
         function animate() {
-            requestAnimationFrame(animate);
-
             if (isGameRunning) {
                 const isInvincible = Date.now() < boostEndTime;
                 
@@ -3082,7 +3091,7 @@
         }
 
         showSplashScreen();
-        animate();
+        renderer.setAnimationLoop(animate); // WebXR requires setAnimationLoop instead of requestAnimationFrame
     </script>
 </body>
 </html>
